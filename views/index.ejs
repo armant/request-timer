@@ -1,3 +1,30 @@
-<% for(var i=0; i<durations.length; i++) { %>
-  <%= JSON.stringify(durations[i]) %>
-<% } %>
+<table>
+  <tr>
+    <th>URL</th>
+    <th>Type</th>
+    <th>Last <%= NUM_OF_LAST_DURATIONS %> durations</th>
+    <th>Average of last <%= NUM_OF_LAST_DURATIONS %> durations</th>
+  </tr>
+  <% for (var i=0; i<durations.length; i++) { %>
+    <tr>
+      <td><%= durations[i]['_id'] %></td>
+      <td><%= durations[i]['type'] %></td>
+      <% var durationsLength = durations[i]['durations'].length,
+             durationsString = '',
+             durationsSum = 0,
+             durationsCount = 0;
+      for (var j=durationsLength - 1;
+               j>durationsLength - 1 - NUM_OF_LAST_DURATIONS;
+               j--) {
+        var duration = durations[i]['durations'][j];
+        for (var timestamp in duration) {
+          durationsString += timestamp + ': ' + duration[timestamp] + ' ';
+          durationsSum += duration[timestamp];
+          durationsCount ++;
+        }
+      } %>
+      <td><%= durationsString %></td>
+      <td><%= durationsSum/durationsCount %></td>
+    </tr>
+  <% } %>
+</table>
