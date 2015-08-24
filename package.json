@@ -9,7 +9,9 @@
   "author": "Arman Tokanov",
   "license": "MIT",
   "dependencies": {
+    "ejs": "^2.3.3",
     "express": "^4.13.3",
-    "mongodb": "^2.0.42"
+    "mongodb": "^2.0.42",
+    "monk": "^1.0.1"
   }
 }
