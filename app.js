@@ -7,14 +7,14 @@ var db = monk('localhost:27017/requesttimer');
 var express = require('express');
 var app = express();
 
+// Serve static files
+app.use(express.static('static'));
+
 // Make the db accessible to the router
 app.use(function(req,res,next){
     req.db = db;
     next();
 });
-
-// routes.js
-require("./routes")(app);
 
 // Server startup
 var server = app.listen(3000, function () {
@@ -22,3 +22,6 @@ var server = app.listen(3000, function () {
   var port = server.address().port;
   console.log('App listening at http://%s:%s', host, port);
 });
+
+// routes.js
+require("./routes")(app);

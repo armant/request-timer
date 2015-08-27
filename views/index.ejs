@@ -1,30 +1,73 @@
-<table>
-  <tr>
-    <th>URL</th>
-    <th>Type</th>
-    <th>Last <%= NUM_OF_LAST_DURATIONS %> durations</th>
-    <th>Average of last <%= NUM_OF_LAST_DURATIONS %> durations</th>
-  </tr>
-  <% for (var i=0; i<durations.length; i++) { %>
+<html>
+<head>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <!-- Bootstrap -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+
+  <!-- Custom frontend JS -->
+  <script type="text/javascript" src="js/frontend.js"></script>
+</head>
+<body>
+  <table id="URLTable">
     <tr>
-      <td><%= durations[i]['_id'] %></td>
-      <td><%= durations[i]['type'] %></td>
-      <% var durationsLength = durations[i]['durations'].length,
-             durationsString = '',
-             durationsSum = 0,
-             durationsCount = 0;
-      for (var j=durationsLength - 1;
-               j>durationsLength - 1 - NUM_OF_LAST_DURATIONS;
-               j--) {
-        var duration = durations[i]['durations'][j];
-        for (var timestamp in duration) {
-          durationsString += timestamp + ': ' + duration[timestamp] + ' ';
-          durationsSum += duration[timestamp];
-          durationsCount ++;
-        }
-      } %>
-      <td><%= durationsString %></td>
-      <td><%= durationsSum/durationsCount %></td>
+      <th>URL</th>
+      <th>Type</th>
+      <th>Last <%= NUM_OF_LAST_DURATIONS %> durations</th>
+      <th>Average of last <%= NUM_OF_LAST_DURATIONS %> durations</th>
     </tr>
-  <% } %>
-</table>
+    <% for (var i=0; i<durations.length; i++) { %>
+      <tr>
+        <td><%= durations[i]['url'] %></td>
+        <td><%= durations[i]['type'] %></td>
+        <% var durationsLength = durations[i]['durations'].length,
+               durationsString = '',
+               durationsSum = 0,
+               durationsCount = 0;
+        for (var j=durationsLength - 1;
+                 j>durationsLength - 1 - NUM_OF_LAST_DURATIONS;
+                 j--) {
+          var duration = durations[i]['durations'][j];
+          for (var timestamp in duration) {
+            durationsString += timestamp + ': ' + duration[timestamp] + ' ';
+            durationsSum += duration[timestamp];
+            durationsCount++;
+          }
+        } %>
+        <td><%= durationsString %></td>
+        <td><%= durationsSum/durationsCount %></td>
+      </tr>
+    <% } %>
+  </table>
+  <form action="/add" method="post" enctype="application/x-www-form-urlencoded" id="newURLForm">
+    <h3>New URL:</h3>
+    <label for="url">URL:</label><input type="url" id="url" name="url">
+    <label for="type">Type:</label>
+    <select id="type" name="type">
+      <option value="GET">GET</option>
+      <option value="POST">POST</option>
+    </select>
+    <input type="submit" value="Add" id="newURLButton">
+    <div class="alert alert-success newURLAlert hide" role="alert" id="newURLSuccess">
+      URL added.
+    </div>
+    <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorURL">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      The URL is malformed; please try again with a correct URL.
+    </div>
+    <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorType">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      The request type needs to be GET or POST; please try again with a correct request type.
+    </div>
+    <div class="alert alert-warning newURLAlert hide" role="alert" id="newURLErrorDuplicate">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      The URL has already been added.
+    </div>
+    <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorSave">
+      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+      Failed to save the URL; please try again.
+    </div>
+  </form>
+</body>
+</html>

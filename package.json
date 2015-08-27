@@ -9,9 +9,12 @@
   "author": "Arman Tokanov",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.13.3",
+    "coffee-script": "^1.9.3",
     "ejs": "^2.3.3",
     "express": "^4.13.3",
     "mongodb": "^2.0.42",
-    "monk": "^1.0.1"
+    "monk": "^1.0.1",
+    "valid-url": "^1.0.9"
   }
 }
