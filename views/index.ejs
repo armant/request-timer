@@ -10,6 +10,9 @@
   <script type="text/javascript" src="js/frontend.js"></script>
 </head>
 <body>
+  <form action="/run">
+    <input type="submit" value="Run checks">
+  </form>
   <table id="URLTable">
     <tr>
       <th>URL</th>
@@ -40,7 +43,7 @@
       </tr>
     <% } %>
   </table>
-  <form action="/add" method="post" enctype="application/x-www-form-urlencoded" id="newURLForm">
+  <form id="newURLForm">
     <h3>New URL:</h3>
     <label for="url">URL:</label><input type="url" id="url" name="url">
     <label for="type">Type:</label>
