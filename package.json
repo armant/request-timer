@@ -4,7 +4,8 @@
   "description": "App that measures the response times for a collection of URLs, detects anomalies, and summarizes the results.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app"
   },
   "author": "Arman Tokanov",
   "license": "MIT",
