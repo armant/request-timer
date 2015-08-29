@@ -10,10 +10,15 @@
   <script type="text/javascript" src="js/frontend.js"></script>
 </head>
 <body>
-  <form action="/run">
-    <input type="submit" value="Run checks">
+  <form>
+    <input type="submit" value="Run checks" id="runChecksButton">
+    <div class="alert alert-success hide" role="alert" id="checkRunAlert">
+      Checks started to run - refresh the page in a few minutes for updated results.
+    </div>
   </form>
-  <table id="URLTable">
+  <a href="/dashboard">Dashboard</a>
+  <table id="URLTable" border="1">
+    <caption>All URLs</caption>
     <tr>
       <th>URL</th>
       <th>Type</th>
@@ -24,22 +29,8 @@
       <tr>
         <td><%= durations[i]['url'] %></td>
         <td><%= durations[i]['type'] %></td>
-        <% var durationsLength = durations[i]['durations'].length,
-               durationsString = '',
-               durationsSum = 0,
-               durationsCount = 0;
-        for (var j=durationsLength - 1;
-                 j>durationsLength - 1 - NUM_OF_LAST_DURATIONS;
-                 j--) {
-          var duration = durations[i]['durations'][j];
-          for (var timestamp in duration) {
-            durationsString += timestamp + ': ' + duration[timestamp] + ' ';
-            durationsSum += duration[timestamp];
-            durationsCount++;
-          }
-        } %>
-        <td><%= durationsString %></td>
-        <td><%= durationsSum/durationsCount %></td>
+        <td><%= JSON.stringify(durations[i]['lastDurations']) %></td>
+        <td><%= durations[i]['lastDurationsAverage'] %></td>
       </tr>
     <% } %>
   </table>

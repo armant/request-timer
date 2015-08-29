@@ -17,3 +17,9 @@ $(document).ready ->
       .fail (error) ->
         $('.newURLAlert').addClass('hide')
         $("##{ error['responseText'] }").removeClass('hide')
+
+  $('#runChecksButton').click ->
+    event.preventDefault()
+    $.get '/run', {}
+      .done ->
+        $('#checkRunAlert').removeClass('hide')
