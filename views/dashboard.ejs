@@ -14,15 +14,17 @@
       <th>URL</th>
       <th>Durations</th>
     </tr>
-    <% slowestDurations['records'].sort(function(a, b) {
-      return b['duration'] - a['duration']
-    })
-    for (var i=0; i<slowestDurations['records'].length; i++) { %>
-      <tr>
-        <td><%= slowestDurations['records'][i]['url'] %></td>
-        <td><%= slowestDurations['records'][i]['duration'] %></td>
-      </tr>
-    <% } %>
+    <% if (slowestDurations) {
+      slowestDurations['records'].sort(function(a, b) {
+        return b['duration'] - a['duration']
+      })
+      for (var i=0; i < slowestDurations['records'].length; i++) { %>
+        <tr>
+          <td><%= slowestDurations['records'][i]['url'] %></td>
+          <td><%= slowestDurations['records'][i]['duration'] %></td>
+        </tr>
+      <% }
+    } %>
   </table>
   <table border="1">
     <caption>Requests with the biggest variance from moving average</caption>
@@ -30,15 +32,17 @@
       <th>URL</th>
       <th>Variance</th>
     </tr>
-    <% mostVaryingDurations['records'].sort(function(a, b) {
-      return b['variance'] - a['variance']
-    })
-    for (var i=0; i<mostVaryingDurations['records'].length; i++) { %>
-      <tr>
-        <td><%= mostVaryingDurations['records'][i]['url'] %></td>
-        <td><%= mostVaryingDurations['records'][i]['variance'] %></td>
-      </tr>
-    <% } %>
+    <% if (mostVaryingDurations) {
+      mostVaryingDurations['records'].sort(function(a, b) {
+        return b['variance'] - a['variance']
+      })
+      for (var i=0; i < mostVaryingDurations['records'].length; i++) { %>
+        <tr>
+          <td><%= mostVaryingDurations['records'][i]['url'] %></td>
+          <td><%= mostVaryingDurations['records'][i]['variance'] %></td>
+        </tr>
+      <% }
+    } %>
   </table>
   <a href="/">Main page</a>
 </body>
