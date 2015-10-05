@@ -254,7 +254,7 @@ addDuration = function(db, url, durationsArray, timestamp) {
       }, function(error, recordsObject) {
         var index, j, len1, min, newMin, newRecord, record, ref;
         if (error) {
-          console.log('ERROR: the database could be updated');
+          console.log('ERROR: the database could not be updated');
           return;
         }
         min = recordsObject['min'];

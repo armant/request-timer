@@ -194,7 +194,7 @@ addDuration = (db, url, durationsArray, timestamp) ->
       metricValue = metricValues[metricIndex]
       metrics.findOne {metric: metricString}, (error, recordsObject) ->
         if error
-          console.log 'ERROR: the database could be updated'
+          console.log 'ERROR: the database could not be updated'
           return
         min = recordsObject['min']
         newRecord = { url: url }
