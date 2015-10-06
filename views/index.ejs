@@ -16,7 +16,7 @@
       Checks started to run - refresh the page in a few minutes for updated results.
     </div>
   </form>
-  <a href="/dashboard">Dashboard</a>
+  <a href="/dashboard">Dashboard for the latest run</a>
   <table id="URLTable" border="1">
     <caption>All URLs</caption>
     <tr>
@@ -25,14 +25,16 @@
       <th>Last <%= NUM_OF_LAST_DURATIONS %> durations</th>
       <th>Average of last <%= NUM_OF_LAST_DURATIONS %> durations</th>
     </tr>
-    <% for (var i=0; i<durations.length; i++) { %>
-      <tr>
-        <td><%= durations[i]['url'] %></td>
-        <td><%= durations[i]['type'] %></td>
-        <td><%= JSON.stringify(durations[i]['lastDurations']) %></td>
-        <td><%= durations[i]['lastDurationsAverage'] %></td>
-      </tr>
-    <% } %>
+    <% if (durations) {
+      for (var i=0; i<durations.length; i++) { %>
+        <tr>
+          <td><%= durations[i]['url'] %></td>
+          <td><%= durations[i]['type'] %></td>
+          <td><%= JSON.stringify(durations[i]['lastDurations']) %></td>
+          <td><%= durations[i]['lastDurationsAverage'] %></td>
+        </tr>
+      <% }
+    } %>
   </table>
   <form id="newURLForm">
     <h3>New URL:</h3>

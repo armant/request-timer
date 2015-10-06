@@ -91,6 +91,7 @@ module.exports = (app) ->
           mostVaryingDurations: mostVaryingDurations
         res.render 'dashboard.ejs', context
 
+
 runChecks = (db, timestamp) ->
   # refresh the dashboards
   metrics = db.get 'metrics'
@@ -107,7 +108,6 @@ runChecks = (db, timestamp) ->
     (err, results) ->
       collection = db.get 'alldurations'
       collection.find {}, {}, (e, durations) ->
-        requestDurations = []
         asyncLib.series durations.map (duration) ->
           (callbackOuter) ->
             url = duration['url']
@@ -116,38 +116,34 @@ runChecks = (db, timestamp) ->
               time: true
               timeout: TIMEOUT
             requestType = duration['type']
+            url_parts = urlLib.parse url, true
+            data = url_parts.query
             if requestType is 'GET'
-              asyncLib.series([1..NUM_OF_REQUESTS].map (_) ->
-                  (callbackInner) ->
-                    requestLib options, (error, response, body) ->
-                      requestDurations.push(
-                          if error then null else response.elapsedTime)
-                      if requestDurations.length is NUM_OF_REQUESTS
-                        addDuration(db,
-                                    options['uri'],
-                                    requestDurations,
-                                    timestamp)
-                        requestDurations = []
-                      callbackInner null
-                (err, results) ->
-                  callbackOuter null)
+              requestCallerFunction = (requestCallerCallback) ->
+                requestLib options, requestCallerCallback
             else if requestType is 'POST'
-              url_parts = urlLib.parse url, true
-              data = url_parts.query
-              asyncLib.series([1..NUM_OF_REQUESTS].map (_) ->
-                  (callbackInner) ->
-                    requestLib.post options, data, (error, response, body) ->
-                      requestDurations.push(
-                          if error then null else response.elapsedTime)
-                      if requestDurations.length is NUM_OF_REQUESTS
-                        addDuration(db,
-                                    options['uri'],
-                                    requestDurations,
-                                    timestamp)
-                        requestDurations = []
-                      callbackInner(null)
-                (err, results) ->
-                  callbackOuter(null)))
+              requestCallerFunction = (requestCallerCallback) ->
+                requestLib.post options, data, requestCallerCallback
+            console.log 'executing request'
+            executeRequests(requestCallerFunction,
+                            db,
+                            options['uri'],
+                            timestamp,
+                            callbackOuter))
+
+executeRequests = (requestCallerFunction, db, uri, timestamp, callbackOuter) ->
+  requestDurations = []
+  asyncLib.series([1..NUM_OF_REQUESTS].map (_) ->
+      (callbackInner) ->
+        requestCallerFunction (error, response, body) ->
+          requestDurations.push(
+              if error then null else response.elapsedTime)
+          if requestDurations.length is NUM_OF_REQUESTS
+            addDuration(db, uri, requestDurations, timestamp)
+            requestDurations = []
+          callbackInner null
+    (err, results) ->
+      callbackOuter null)
 
 addDuration = (db, url, durationsArray, timestamp) ->
   # update the database with new measurement
