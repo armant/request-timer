@@ -47,19 +47,30 @@ module.exports = function(app) {
     });
   });
   app.post('/add', urlencodedParserLib, function(req, res) {
-    var collection, db;
-    if (!validUrlLib.isUri(req.body.url)) {
+    var collection, data, db, type, url;
+    url = req.body.url;
+    type = req.body.type;
+    data = req.body.data;
+    if (!validUrlLib.isUri(url)) {
       res.status(500).send('newURLErrorURL');
       return;
     }
-    if (!REQUEST_TYPES[req.body.type]) {
+    if (!REQUEST_TYPES[type]) {
       res.status(500).send('newURLErrorType');
       return;
+    }
+    if (data) {
+      try {
+        JSON.parse(data);
+      } catch (_error) {
+        res.status(500).send('newURLErrorData');
+        return;
+      }
     }
     db = req.db;
     collection = db.get('alldurations');
     return collection.findOne({
-      url: req.body.url
+      url: url
     }, function(error, result) {
       var urlEntry;
       if (error) {
@@ -71,8 +82,9 @@ module.exports = function(app) {
         return;
       }
       urlEntry = {
-        url: req.body.url,
-        type: req.body.type,
+        url: url,
+        type: type,
+        data: data,
         durations: []
       };
       return collection.insert(urlEntry, function(error, result) {
@@ -144,7 +156,7 @@ runChecks = function(db, timestamp) {
     return collection.find({}, {}, function(e, durations) {
       return asyncLib.series(durations.map(function(duration) {
         return function(callbackOuter) {
-          var data, options, requestCallerFunction, requestType, url, url_parts;
+          var data, options, requestCallerFunction, requestType, url;
           url = duration['url'];
           options = {
             uri: url,
@@ -152,19 +164,17 @@ runChecks = function(db, timestamp) {
             timeout: TIMEOUT
           };
           requestType = duration['type'];
-          url_parts = urlLib.parse(url, true);
-          data = url_parts.query;
           if (requestType === 'GET') {
             requestCallerFunction = function(requestCallerCallback) {
               return requestLib(options, requestCallerCallback);
             };
           } else if (requestType === 'POST') {
+            data = duration['data'];
             requestCallerFunction = function(requestCallerCallback) {
               return requestLib.post(options, data, requestCallerCallback);
             };
           }
-          console.log('executing request');
-          return executeRequests(requestCallerFunction, db, options['uri'], timestamp, callbackOuter);
+          return executeRequests(requestCallerFunction, db, url, timestamp, callbackOuter);
         };
       }));
     });

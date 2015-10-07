@@ -45,16 +45,25 @@ module.exports = (app) ->
       res.render 'index.ejs', context
 
   app.post '/add', urlencodedParserLib, (req, res) ->
-    if not validUrlLib.isUri(req.body.url)
+    url = req.body.url
+    type = req.body.type
+    data = req.body.data
+    if not validUrlLib.isUri(url)
       res.status(500).send 'newURLErrorURL'
       return
-    if not REQUEST_TYPES[req.body.type]
+    if not REQUEST_TYPES[type]
       res.status(500).send 'newURLErrorType'
       return
+    if data
+      try
+        JSON.parse data
+      catch
+        res.status(500).send 'newURLErrorData'
+        return
 
     db = req.db
     collection = db.get 'alldurations'
-    collection.findOne {url: req.body.url}, (error, result) ->
+    collection.findOne {url: url}, (error, result) ->
       if error
         res.status(500).send 'newURLErrorSave'
         return
@@ -62,8 +71,9 @@ module.exports = (app) ->
         res.status(500).send 'newURLErrorDuplicate'
         return
       urlEntry =
-        url: req.body.url
-        type: req.body.type
+        url: url
+        type: type
+        data: data
         durations: []
       collection.insert urlEntry, (error, result) ->
         if error
@@ -116,18 +126,16 @@ runChecks = (db, timestamp) ->
               time: true
               timeout: TIMEOUT
             requestType = duration['type']
-            url_parts = urlLib.parse url, true
-            data = url_parts.query
             if requestType is 'GET'
               requestCallerFunction = (requestCallerCallback) ->
                 requestLib options, requestCallerCallback
             else if requestType is 'POST'
+              data = duration['data']
               requestCallerFunction = (requestCallerCallback) ->
                 requestLib.post options, data, requestCallerCallback
-            console.log 'executing request'
             executeRequests(requestCallerFunction,
                             db,
-                            options['uri'],
+                            url,
                             timestamp,
                             callbackOuter))
 
