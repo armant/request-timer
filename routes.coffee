@@ -23,8 +23,6 @@ TIMEOUT = 10000
 
 # library to handle sync/async
 asyncLib = require 'async'
-# library for finding a median in an array
-medianLib = require 'median'
 # library for sending HTTP requests
 requestLib = require 'request'
 # create application/x-www-form-urlencoded parser from request.body
@@ -140,25 +138,34 @@ runChecks = (db, timestamp) ->
                             callbackOuter))
 
 executeRequests = (requestCallerFunction, db, uri, timestamp, callbackOuter) ->
-  requestDurations = []
+  responseRecords = []
   asyncLib.series([1..NUM_OF_REQUESTS].map (_) ->
       (callbackInner) ->
         requestCallerFunction (error, response, body) ->
-          requestDurations.push(
-              if error then null else response.elapsedTime)
-          if requestDurations.length is NUM_OF_REQUESTS
-            addDuration(db, uri, requestDurations, timestamp)
-            requestDurations = []
+          if error
+            responseRecord =
+              time: null
+          else
+            responseRecord =
+              time: response.elapsedTime
+              statusCode: response.statusCode
+              length: body.length
+          responseRecords.push responseRecord
+          if responseRecords.length is NUM_OF_REQUESTS
+            addDuration(db, uri, responseRecords, timestamp)
+            responseRecords = []
           callbackInner null
     (err, results) ->
       callbackOuter null)
 
-addDuration = (db, url, durationsArray, timestamp) ->
+addDuration = (db, url, responseRecords, timestamp) ->
   # update the database with new measurement
-  currentDuration = medianLib(durationsArray)
+  responseRecord = findMedianRecord responseRecords
+  currentDuration = responseRecord['time']
   console.log url
-  console.log durationsArray
+  console.log responseRecords
   console.log currentDuration
+  console.log responseRecord
   allDurations = db.get 'alldurations'
   allDurations.findOne {url: url}, (error, durationsObject) ->
     if error
@@ -171,7 +178,7 @@ addDuration = (db, url, durationsArray, timestamp) ->
                    #{ NUM_OF_LAST_DURATIONS }-check average of #{ average } more
                    than #{ ALERT_MULTIPLE } times"
     newDuration = {}
-    newDuration[timestamp] = currentDuration
+    newDuration[timestamp] = responseRecord
     durationsObject['durations'].push newDuration
     durationsObject['lastDurations'] =
       durationsObject['durations'][-NUM_OF_LAST_DURATIONS..]
@@ -181,9 +188,9 @@ addDuration = (db, url, durationsArray, timestamp) ->
     sumDurations = 0
     countDurations = 0
     for durationObject in lastDurations
-      for timestamp, duration of durationObject
-        if duration
-          sumDurations += duration
+      for timestamp, responseRecord of durationObject
+        if responseRecord['time']
+          sumDurations += responseRecord['time']
           countDurations++
     durationsObject['lastDurationsAverage'] = sumDurations / countDurations
     allDurations.update { _id: durationsObject['_id'] }, durationsObject
@@ -218,3 +225,9 @@ addDuration = (db, url, durationsArray, timestamp) ->
             recordsObject['min'] = newMin
         console.log recordsObject
         metrics.update { _id: recordsObject['_id'] }, recordsObject
+
+findMedianRecord = (responseRecords) ->
+  responseRecords.sort (a, b) ->
+    a.time - b.time
+  middle = Math.floor responseRecords.length / 2
+  return responseRecords[middle]

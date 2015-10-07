@@ -15,7 +15,6 @@
     "coffee-script": "^1.9.3",
     "ejs": "^2.3.3",
     "express": "^4.13.3",
-    "median": "0.0.2",
     "mongodb": "^2.0.42",
     "monk": "^1.0.1",
     "request": "^2.61.0",
