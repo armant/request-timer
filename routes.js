@@ -32,20 +32,25 @@ validUrlLib = require('valid-url');
 
 module.exports = function(app) {
   app.get('/', function(req, res) {
-    var collection, db;
+    var allDurations, db;
     db = req.db;
-    collection = db.get('alldurations');
-    return collection.find({}, {}, function(e, durations) {
-      var context;
-      context = {
-        'durations': durations,
-        'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS
-      };
-      return res.render('index.ejs', context);
+    allDurations = db.get('alldurations');
+    return allDurations.find({}, {}, function(e, durations) {
+      var durationsByTimestamp;
+      durationsByTimestamp = db.get('durationsByTimestamp');
+      return durationsByTimestamp.find({}, {}, function(e, byTimestamp) {
+        var context;
+        context = {
+          'durations': durations,
+          'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS,
+          'byTimestamp': byTimestamp
+        };
+        return res.render('index.ejs', context);
+      });
     });
   });
   app.post('/add', urlencodedParserLib, function(req, res) {
-    var collection, data, db, type, url;
+    var allDurations, data, db, type, url;
     url = req.body.url;
     type = req.body.type;
     data = req.body.data;
@@ -66,8 +71,8 @@ module.exports = function(app) {
       }
     }
     db = req.db;
-    collection = db.get('alldurations');
-    return collection.findOne({
+    allDurations = db.get('alldurations');
+    return allDurations.findOne({
       url: url,
       type: type
     }, function(error, result) {
@@ -86,7 +91,7 @@ module.exports = function(app) {
         data: data,
         durations: []
       };
-      return collection.insert(urlEntry, function(error, result) {
+      return allDurations.insert(urlEntry, function(error, result) {
         if (error) {
           res.status(500).send('newURLErrorSave');
           return;
@@ -97,22 +102,22 @@ module.exports = function(app) {
   });
   app.get('/run', function(req, res) {
     var db, timestamp;
-    timestamp = Math.floor(new Date() / 1000);
+    timestamp = "" + (Math.floor(new Date() / 1000));
     runChecks(req.db, timestamp);
     res.sendStatus(200);
     return db = req.db;
   });
   return app.get('/dashboard', function(req, res) {
-    var collection, db;
+    var db, metrics;
     db = req.db;
-    collection = db.get('metrics');
-    return collection.findOne({
+    metrics = db.get('metrics');
+    return metrics.findOne({
       metric: 'duration'
     }, function(error, slowestDurations) {
       if (error) {
         console.log('ERROR: the database could not be accessed');
       }
-      return collection.findOne({
+      return metrics.findOne({
         metric: 'variance'
       }, function(error, mostVaryingDurations) {
         var context;
@@ -150,9 +155,9 @@ runChecks = function(db, timestamp) {
       });
     };
   }), function(err, results) {
-    var collection;
-    collection = db.get('alldurations');
-    return collection.find({}, {}, function(e, durations) {
+    var allDurations;
+    allDurations = db.get('alldurations');
+    return allDurations.find({}, {}, function(e, durations) {
       return asyncLib.series(durations.map(function(duration) {
         return function(callbackOuter) {
           var data, options, requestCallerFunction, requestType, url;
@@ -197,6 +202,8 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
           };
         } else {
           responseRecord = {
+            url: url,
+            type: requestType,
             time: response.elapsedTime,
             statusCode: response.statusCode,
             length: body.length
@@ -216,16 +223,16 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
 };
 
 addDuration = function(db, url, requestType, responseRecords, timestamp) {
-  var allDurations, currentDuration, responseRecord;
+  var allDurations, currentDuration, durationsByTimestamp, responseRecord;
   responseRecord = findMedianRecord(responseRecords);
   currentDuration = responseRecord['time'];
   console.log(url);
   console.log(responseRecords);
-  console.log(currentDuration);
   console.log(responseRecord);
   allDurations = db.get('alldurations');
-  return allDurations.findOne({
-    url: url
+  allDurations.findOne({
+    url: url,
+    type: requestType
   }, function(error, durationsObject) {
     var average, countDurations, durationObject, i, lastDurations, len, metricStrings, metricValues, metrics, newDuration, sumDurations, variance;
     if (error) {
@@ -300,12 +307,34 @@ addDuration = function(db, url, requestType, responseRecords, timestamp) {
             recordsObject['min'] = newMin;
           }
         }
-        console.log(recordsObject);
         return metrics.update({
           _id: recordsObject['_id']
         }, recordsObject);
       });
     });
+  });
+  durationsByTimestamp = db.get('durationsByTimestamp');
+  return durationsByTimestamp.findOne({
+    timestamp: timestamp
+  }, function(error, durationsObject) {
+    if (error) {
+      console.log('ERROR: the database could be updated');
+      return;
+    }
+    if (!durationsObject) {
+      durationsObject = {
+        timestamp: timestamp,
+        durations: []
+      };
+    }
+    durationsObject['durations'].push(responseRecord);
+    if (durationsObject['_id']) {
+      return durationsByTimestamp.update({
+        _id: durationsObject['_id']
+      }, durationsObject);
+    } else {
+      return durationsByTimestamp.insert(durationsObject);
+    }
   });
 };
 

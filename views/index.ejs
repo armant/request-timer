@@ -18,7 +18,7 @@
   </form>
   <a href="/dashboard">Dashboard for the latest run</a>
   <table id="URLTable" border="1">
-    <caption>All URLs</caption>
+    <caption>Arranged by URLs</caption>
     <tr>
       <th>URL</th>
       <th>Type</th>
@@ -34,6 +34,21 @@
           <td><%= durations[i]['data'] %></td>
           <td><%= JSON.stringify(durations[i]['lastDurations']) %></td>
           <td><%= durations[i]['lastDurationsAverage'] %></td>
+        </tr>
+      <% }
+    } %>
+  </table>
+  <table border="1">
+    <caption>Arranged by timestamps</caption>
+    <tr>
+      <th>Timestamp</th>
+      <th>Durations</th>
+    </tr>
+    <% if (byTimestamp) {
+      for (var i=0; i<byTimestamp.length; i++) { %>
+        <tr>
+          <td><%= byTimestamp[i]['timestamp'] %></td>
+          <td><%= JSON.stringify(byTimestamp[i]['durations']) %></td>
         </tr>
       <% }
     } %>
