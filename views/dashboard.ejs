@@ -13,6 +13,7 @@
     <caption>Slowest requests</caption>
     <tr>
       <th>URL</th>
+      <th>Type</th>
       <th>Durations</th>
     </tr>
     <% if (slowestDurations) {
@@ -22,6 +23,7 @@
       for (var i=0; i < slowestDurations['records'].length; i++) { %>
         <tr>
           <td><%= slowestDurations['records'][i]['url'] %></td>
+          <td><%= slowestDurations['records'][i]['type'] %></td>
           <td><%= slowestDurations['records'][i]['duration'] %></td>
         </tr>
       <% }
@@ -31,6 +33,7 @@
     <caption>Requests with the biggest variance from moving average</caption>
     <tr>
       <th>URL</th>
+      <th>Type</th>
       <th>Variance</th>
     </tr>
     <% if (mostVaryingDurations) {
@@ -40,6 +43,7 @@
       for (var i=0; i < mostVaryingDurations['records'].length; i++) { %>
         <tr>
           <td><%= mostVaryingDurations['records'][i]['url'] %></td>
+          <td><%= mostVaryingDurations['records'][i]['type'] %></td>
           <td><%= mostVaryingDurations['records'][i]['variance'] %></td>
         </tr>
       <% }

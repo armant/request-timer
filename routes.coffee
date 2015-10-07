@@ -61,7 +61,7 @@ module.exports = (app) ->
 
     db = req.db
     collection = db.get 'alldurations'
-    collection.findOne {url: url}, (error, result) ->
+    collection.findOne {url: url, type: type}, (error, result) ->
       if error
         res.status(500).send 'newURLErrorSave'
         return
@@ -134,10 +134,12 @@ runChecks = (db, timestamp) ->
             executeRequests(requestCallerFunction,
                             db,
                             url,
+                            requestType,
                             timestamp,
                             callbackOuter))
 
-executeRequests = (requestCallerFunction, db, uri, timestamp, callbackOuter) ->
+executeRequests = (
+    requestCallerFunction, db, url, requestType, timestamp, callbackOuter) ->
   responseRecords = []
   asyncLib.series([1..NUM_OF_REQUESTS].map (_) ->
       (callbackInner) ->
@@ -152,13 +154,13 @@ executeRequests = (requestCallerFunction, db, uri, timestamp, callbackOuter) ->
               length: body.length
           responseRecords.push responseRecord
           if responseRecords.length is NUM_OF_REQUESTS
-            addDuration(db, uri, responseRecords, timestamp)
+            addDuration(db, url, requestType, responseRecords, timestamp)
             responseRecords = []
           callbackInner null
     (err, results) ->
       callbackOuter null)
 
-addDuration = (db, url, responseRecords, timestamp) ->
+addDuration = (db, url, requestType, responseRecords, timestamp) ->
   # update the database with new measurement
   responseRecord = findMedianRecord responseRecords
   currentDuration = responseRecord['time']
@@ -208,7 +210,7 @@ addDuration = (db, url, responseRecords, timestamp) ->
           console.log 'ERROR: the database could not be updated'
           return
         min = recordsObject['min']
-        newRecord = { url: url }
+        newRecord = { url: url, type: requestType }
         newRecord[metricString] = metricValue
         if recordsObject['records'].length < NUM_OF_MOST_EXTREME and metricValue
           recordsObject['records'].push newRecord

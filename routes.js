@@ -68,7 +68,8 @@ module.exports = function(app) {
     db = req.db;
     collection = db.get('alldurations');
     return collection.findOne({
-      url: url
+      url: url,
+      type: type
     }, function(error, result) {
       var urlEntry;
       if (error) {
@@ -172,14 +173,14 @@ runChecks = function(db, timestamp) {
               return requestLib.post(options, data, requestCallerCallback);
             };
           }
-          return executeRequests(requestCallerFunction, db, url, timestamp, callbackOuter);
+          return executeRequests(requestCallerFunction, db, url, requestType, timestamp, callbackOuter);
         };
       }));
     });
   });
 };
 
-executeRequests = function(requestCallerFunction, db, uri, timestamp, callbackOuter) {
+executeRequests = function(requestCallerFunction, db, url, requestType, timestamp, callbackOuter) {
   var i, responseRecords, results1;
   responseRecords = [];
   return asyncLib.series((function() {
@@ -203,7 +204,7 @@ executeRequests = function(requestCallerFunction, db, uri, timestamp, callbackOu
         }
         responseRecords.push(responseRecord);
         if (responseRecords.length === NUM_OF_REQUESTS) {
-          addDuration(db, uri, responseRecords, timestamp);
+          addDuration(db, url, requestType, responseRecords, timestamp);
           responseRecords = [];
         }
         return callbackInner(null);
@@ -214,7 +215,7 @@ executeRequests = function(requestCallerFunction, db, uri, timestamp, callbackOu
   });
 };
 
-addDuration = function(db, url, responseRecords, timestamp) {
+addDuration = function(db, url, requestType, responseRecords, timestamp) {
   var allDurations, currentDuration, responseRecord;
   responseRecord = findMedianRecord(responseRecords);
   currentDuration = responseRecord['time'];
@@ -274,7 +275,8 @@ addDuration = function(db, url, responseRecords, timestamp) {
         }
         min = recordsObject['min'];
         newRecord = {
-          url: url
+          url: url,
+          type: requestType
         };
         newRecord[metricString] = metricValue;
         if (recordsObject['records'].length < NUM_OF_MOST_EXTREME && metricValue) {
