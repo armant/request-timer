@@ -33,7 +33,7 @@ urlLib = require 'url'
 validUrlLib = require 'valid-url'
 
 module.exports = (app) ->
-  app.get '/', (req, res) ->
+  app.get '/stats-by-url', (req, res) ->
     db = req.db
     allDurations = db.get 'alldurations'
     allDurations.find {}, {}, (e, durations) ->
@@ -43,7 +43,7 @@ module.exports = (app) ->
           'durations': durations
           'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS
           'byTimestamp': byTimestamp
-        res.render 'index.ejs', context
+        res.render 'by-url.ejs', context
 
   app.post '/add', urlencodedParserLib, (req, res) ->
     url = req.body.url
@@ -88,7 +88,7 @@ module.exports = (app) ->
     res.sendStatus 200
     db = req.db
 
-  app.get '/dashboard', (req, res) ->
+  app.get '/', (req, res) ->
     db = req.db
     metrics = db.get 'metrics'
     metrics.findOne {metric: 'duration'}, (error, slowestDurations) ->

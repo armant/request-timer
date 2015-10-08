@@ -1,54 +1,51 @@
 <html>
 <head>
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-  <!-- Bootstrap -->
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
-
+  <%- include('header') %>
 </head>
 <body>
-  <h2>Dashboard for the latest run</h2>
-  <table border="1">
-    <caption>Slowest requests</caption>
-    <tr>
-      <th>URL</th>
-      <th>Type</th>
-      <th>Durations</th>
-    </tr>
-    <% if (slowestDurations) {
-      slowestDurations['records'].sort(function(a, b) {
-        return b['duration'] - a['duration']
-      })
-      for (var i=0; i < slowestDurations['records'].length; i++) { %>
-        <tr>
-          <td><%= slowestDurations['records'][i]['url'] %></td>
-          <td><%= slowestDurations['records'][i]['type'] %></td>
-          <td><%= slowestDurations['records'][i]['duration'] %></td>
-        </tr>
-      <% }
-    } %>
-  </table>
-  <table border="1">
-    <caption>Requests with the biggest variance from moving average</caption>
-    <tr>
-      <th>URL</th>
-      <th>Type</th>
-      <th>Variance</th>
-    </tr>
-    <% if (mostVaryingDurations) {
-      mostVaryingDurations['records'].sort(function(a, b) {
-        return b['variance'] - a['variance']
-      })
-      for (var i=0; i < mostVaryingDurations['records'].length; i++) { %>
-        <tr>
-          <td><%= mostVaryingDurations['records'][i]['url'] %></td>
-          <td><%= mostVaryingDurations['records'][i]['type'] %></td>
-          <td><%= mostVaryingDurations['records'][i]['variance'] %></td>
-        </tr>
-      <% }
-    } %>
-  </table>
-  <a href="/">Main page</a>
+  <%- include('navbar') %>
+  <div class="container">
+    <h2>Data for the latest run</h2>
+    <table border="1">
+      <caption>Slowest requests</caption>
+      <tr>
+        <th>URL</th>
+        <th>Type</th>
+        <th>Durations</th>
+      </tr>
+      <% if (slowestDurations) {
+        slowestDurations['records'].sort(function(a, b) {
+          return b['duration'] - a['duration']
+        })
+        for (var i=0; i < slowestDurations['records'].length; i++) { %>
+          <tr>
+            <td><%= slowestDurations['records'][i]['url'] %></td>
+            <td><%= slowestDurations['records'][i]['type'] %></td>
+            <td><%= slowestDurations['records'][i]['duration'] %></td>
+          </tr>
+        <% }
+      } %>
+    </table>
+    <table border="1">
+      <caption>Requests with the biggest variance from moving average</caption>
+      <tr>
+        <th>URL</th>
+        <th>Type</th>
+        <th>Variance</th>
+      </tr>
+      <% if (mostVaryingDurations) {
+        mostVaryingDurations['records'].sort(function(a, b) {
+          return b['variance'] - a['variance']
+        })
+        for (var i=0; i < mostVaryingDurations['records'].length; i++) { %>
+          <tr>
+            <td><%= mostVaryingDurations['records'][i]['url'] %></td>
+            <td><%= mostVaryingDurations['records'][i]['type'] %></td>
+            <td><%= mostVaryingDurations['records'][i]['variance'] %></td>
+          </tr>
+        <% }
+      } %>
+    </table>
+  </div>
 </body>
 </html>

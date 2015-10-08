@@ -1,0 +1,94 @@
+<html>
+<head>
+  <%- include('header') %>
+  <!-- Custom frontend JS -->
+  <script type="text/javascript" src="js/by-url.js"></script>
+</head>
+<body>
+  <%- include('navbar') %>
+  <div class="container">
+    <form>
+      <input type="submit" value="Run checks" id="runChecksButton">
+      <div class="alert alert-success hide" role="alert" id="checkRunAlert">
+        Checks started to run - refresh the page in a few minutes for updated results.
+      </div>
+    </form>
+    <table id="URLTable" border="1">
+      <caption>Arranged by URLs</caption>
+      <tr>
+        <th>URL</th>
+        <th>Type</th>
+        <th>Data</th>
+        <th>Last <%= NUM_OF_LAST_DURATIONS %> durations</th>
+        <th>Average of last <%= NUM_OF_LAST_DURATIONS %> durations</th>
+      </tr>
+      <% if (durations) {
+        for (var i=0; i<durations.length; i++) { %>
+          <tr>
+            <td><%= durations[i]['url'] %></td>
+            <td><%= durations[i]['type'] %></td>
+            <td><%= durations[i]['data'] %></td>
+            <td><%= JSON.stringify(durations[i]['lastDurations']) %></td>
+            <td><%= durations[i]['lastDurationsAverage'] %></td>
+          </tr>
+        <% }
+      } %>
+    </table>
+    <table border="1">
+      <caption>Arranged by timestamps</caption>
+      <tr>
+        <th>Timestamp</th>
+        <th>Durations</th>
+      </tr>
+      <% if (byTimestamp) {
+        for (var i=0; i<byTimestamp.length; i++) { %>
+          <tr>
+            <td><%= byTimestamp[i]['timestamp'] %></td>
+            <td><%= JSON.stringify(byTimestamp[i]['durations']) %></td>
+          </tr>
+        <% }
+      } %>
+    </table>
+    <form id="newURLForm">
+      <h3>New URL:</h3>
+      <div>
+        <label for="url">URL:</label><input type="url" id="url" name="url">
+      </div>
+      <div>
+        <label for="type">Type:</label>
+      <select id="type" name="type">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+      </select>
+      </div>
+      <div class="hide" id="typeWrapper">
+        <label for="data">Data:</label><textarea id="data" name="data" placeholder="Enter a valid JSON object"></textarea>
+      </div>
+      <input type="submit" value="Add" id="newURLButton">
+      <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorURL">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        The URL is malformed; please try again with a correct URL.
+      </div>
+      <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorType">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        The request type needs to be GET or POST; please try again with a correct request type.
+      </div>
+      <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorData">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        The data is malformed; please try again with a properly formatted JSON.
+      </div>
+      <div class="alert alert-success newURLAlert hide" role="alert" id="newURLSuccess">
+        URL added.
+      </div>
+      <div class="alert alert-warning newURLAlert hide" role="alert" id="newURLErrorDuplicate">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        The URL has already been added.
+      </div>
+      <div class="alert alert-danger newURLAlert hide" role="alert" id="newURLErrorSave">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        Failed to save the URL; please try again.
+      </div>
+    </form>
+  </div>
+</body>
+</html>

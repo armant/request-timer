@@ -31,7 +31,7 @@ urlLib = require('url');
 validUrlLib = require('valid-url');
 
 module.exports = function(app) {
-  app.get('/', function(req, res) {
+  app.get('/stats-by-url', function(req, res) {
     var allDurations, db;
     db = req.db;
     allDurations = db.get('alldurations');
@@ -45,7 +45,7 @@ module.exports = function(app) {
           'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS,
           'byTimestamp': byTimestamp
         };
-        return res.render('index.ejs', context);
+        return res.render('by-url.ejs', context);
       });
     });
   });
@@ -107,7 +107,7 @@ module.exports = function(app) {
     res.sendStatus(200);
     return db = req.db;
   });
-  return app.get('/dashboard', function(req, res) {
+  return app.get('/', function(req, res) {
     var db, metrics;
     db = req.db;
     metrics = db.get('metrics');
