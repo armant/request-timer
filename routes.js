@@ -36,17 +36,24 @@ module.exports = function(app) {
     db = req.db;
     allDurations = db.get('alldurations');
     return allDurations.find({}, {}, function(e, durations) {
-      var durationsByTimestamp;
-      durationsByTimestamp = db.get('durationsByTimestamp');
-      return durationsByTimestamp.find({}, {}, function(e, byTimestamp) {
-        var context;
-        context = {
-          'durations': durations,
-          'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS,
-          'byTimestamp': byTimestamp
-        };
-        return res.render('by-url.ejs', context);
-      });
+      var context;
+      context = {
+        'durations': durations,
+        'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS
+      };
+      return res.render('by-url.ejs', context);
+    });
+  });
+  app.get('/stats-by-timestamp', function(req, res) {
+    var byTimestamp, db;
+    db = req.db;
+    byTimestamp = db.get('durationsByTimestamp');
+    return byTimestamp.find({}, {}, function(e, durationsByTimestamp) {
+      var context;
+      context = {
+        'durationsByTimestamp': durationsByTimestamp
+      };
+      return res.render('by-timestamp.ejs', context);
     });
   });
   app.post('/add', urlencodedParserLib, function(req, res) {
@@ -206,6 +213,8 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
         var responseRecord;
         if (error) {
           responseRecord = {
+            url: url,
+            type: requestType,
             time: null
           };
         } else {
@@ -231,7 +240,7 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
 };
 
 addDuration = function(db, url, requestType, responseRecords, timestamp) {
-  var allDurations, currentDuration, durationsByTimestamp, responseRecord;
+  var allDurations, byTimestamp, currentDuration, responseRecord;
   responseRecord = findMedianRecord(responseRecords);
   currentDuration = responseRecord['time'];
   console.log(url);
@@ -324,8 +333,8 @@ addDuration = function(db, url, requestType, responseRecords, timestamp) {
       });
     });
   });
-  durationsByTimestamp = db.get('durationsByTimestamp');
-  return durationsByTimestamp.findOne({
+  byTimestamp = db.get('durationsByTimestamp');
+  return byTimestamp.findOne({
     timestamp: timestamp
   }, function(error, durationsObject) {
     if (error) {
@@ -340,11 +349,11 @@ addDuration = function(db, url, requestType, responseRecords, timestamp) {
     }
     durationsObject['durations'].push(responseRecord);
     if (durationsObject['_id']) {
-      return durationsByTimestamp.update({
+      return byTimestamp.update({
         _id: durationsObject['_id']
       }, durationsObject);
     } else {
-      return durationsByTimestamp.insert(durationsObject);
+      return byTimestamp.insert(durationsObject);
     }
   });
 };

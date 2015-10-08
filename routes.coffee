@@ -37,13 +37,18 @@ module.exports = (app) ->
     db = req.db
     allDurations = db.get 'alldurations'
     allDurations.find {}, {}, (e, durations) ->
-      durationsByTimestamp = db.get 'durationsByTimestamp'
-      durationsByTimestamp.find {}, {}, (e, byTimestamp) ->
-        context =
-          'durations': durations
-          'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS
-          'byTimestamp': byTimestamp
-        res.render 'by-url.ejs', context
+      context =
+        'durations': durations
+        'NUM_OF_LAST_DURATIONS': NUM_OF_LAST_DURATIONS
+      res.render 'by-url.ejs', context
+
+  app.get '/stats-by-timestamp', (req, res) ->
+    db = req.db
+    byTimestamp = db.get 'durationsByTimestamp'
+    byTimestamp.find {}, {}, (e, durationsByTimestamp) ->
+      context =
+        'durationsByTimestamp': durationsByTimestamp
+      res.render 'by-timestamp.ejs', context
 
   app.post '/add', urlencodedParserLib, (req, res) ->
     url = req.body.url
@@ -157,6 +162,8 @@ executeRequests = (
         requestCallerFunction (error, response, body) ->
           if error
             responseRecord =
+              url: url
+              type: requestType
               time: null
           else
             responseRecord =
@@ -252,8 +259,8 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
           metrics.update { _id: recordsObject['_id'] }, recordsObject)
 
   # update the (timestamp -> data) collection with new measurement
-  durationsByTimestamp = db.get 'durationsByTimestamp'
-  durationsByTimestamp.findOne(
+  byTimestamp = db.get 'durationsByTimestamp'
+  byTimestamp.findOne(
     {timestamp: timestamp},
     (error, durationsObject) ->
       if error
@@ -265,10 +272,10 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
           durations: []
       durationsObject['durations'].push responseRecord
       if durationsObject['_id']
-        durationsByTimestamp.update(
+        byTimestamp.update(
             { _id: durationsObject['_id'] }, durationsObject)
       else
-        durationsByTimestamp.insert durationsObject)
+        byTimestamp.insert durationsObject)
 
 findMedianRecord = (responseRecords) ->
   responseRecords.sort (a, b) ->

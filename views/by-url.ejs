@@ -26,21 +26,6 @@
         <% }
       } %>
     </table>
-    <h2>Statistics per timestamp</h2>
-    <table border="1">
-      <tr>
-        <th>Timestamp</th>
-        <th>Durations</th>
-      </tr>
-      <% if (byTimestamp) {
-        for (var i=0; i<byTimestamp.length; i++) { %>
-          <tr>
-            <td><%= byTimestamp[i]['timestamp'] %></td>
-            <td><%= JSON.stringify(byTimestamp[i]['durations']) %></td>
-          </tr>
-        <% }
-      } %>
-    </table>
     <form id="newURLForm">
       <h3>New URL:</h3>
       <div>

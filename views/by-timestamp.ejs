@@ -1,0 +1,25 @@
+<html>
+<head>
+  <%- include('header') %>
+</head>
+<body>
+  <%- include('navbar') %>
+  <div class="container">
+    <h2>Statistics per timestamp</h2>
+    <table border="1">
+      <tr>
+        <th>Timestamp</th>
+        <th>Durations</th>
+      </tr>
+      <% if (durationsByTimestamp) {
+        for (var i=durationsByTimestamp.length - 1; i>=0; i--) { %>
+          <tr>
+            <td><%= durationsByTimestamp[i]['timestamp'] %></td>
+            <td><%= JSON.stringify(durationsByTimestamp[i]['durations']) %></td>
+          </tr>
+        <% }
+      } %>
+    </table>
+  </div>
+</body>
+<html>
