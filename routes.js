@@ -101,11 +101,10 @@ module.exports = function(app) {
     });
   });
   app.get('/run', function(req, res) {
-    var db, timestamp;
+    var timestamp;
     timestamp = "" + (Math.floor(new Date() / 1000));
     runChecks(req.db, timestamp);
-    res.sendStatus(200);
-    return db = req.db;
+    return res.redirect('/');
   });
   return app.get('/', function(req, res) {
     var db, metrics;
@@ -275,38 +274,41 @@ addDuration = function(db, url, requestType, responseRecords, timestamp) {
       return metrics.findOne({
         metric: metricString
       }, function(error, recordsObject) {
-        var index, j, len1, min, newMin, newRecord, record, ref;
+        var newRecord;
         if (error) {
           console.log('ERROR: the database could not be updated');
           return;
         }
-        min = recordsObject['min'];
         newRecord = {
           url: url,
           type: requestType
         };
         newRecord[metricString] = metricValue;
-        if (recordsObject['records'].length < NUM_OF_MOST_EXTREME && metricValue) {
-          recordsObject['records'].push(newRecord);
-          if (min > metricValue) {
-            recordsObject['min'] = metricValue;
-          }
-        } else {
-          if (min < metricValue) {
-            newMin = MAX_VALUE;
-            ref = recordsObject['records'];
-            for (index = j = 0, len1 = ref.length; j < len1; index = ++j) {
-              record = ref[index];
-              if (record[metricString] === min) {
-                recordsObject['records'][index] = newRecord;
-              }
-              if (newMin > recordsObject['records'][index][metricString]) {
-                newMin = recordsObject['records'][index][metricString];
-              }
-            }
-            recordsObject['min'] = newMin;
-          }
-        }
+        recordsObject['records'].push(newRecord);
+
+        /*
+        Use the snippet below if it is needed to store top X URLs in the
+        performance dashboard, instead of storing all like we currently do.
+        The snippet below would replace the three lines above.
+        ______________________________________________________________________
+        min = recordsObject['min']
+        newRecord = { url: url, type: requestType }
+        newRecord[metricString] = metricValue
+        if (recordsObject['records'].length < NUM_OF_MOST_EXTREME and
+            metricValue)
+          recordsObject['records'].push newRecord
+          if min > metricValue
+            recordsObject['min'] = metricValue
+        else
+          if min < metricValue
+            newMin = MAX_VALUE
+            for record, index in recordsObject['records']
+              if record[metricString] is min
+                recordsObject['records'][index] = newRecord
+              if newMin > recordsObject['records'][index][metricString]
+                newMin = recordsObject['records'][index][metricString]
+            recordsObject['min'] = newMin
+         */
         return metrics.update({
           _id: recordsObject['_id']
         }, recordsObject);

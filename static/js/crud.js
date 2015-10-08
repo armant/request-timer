@@ -9,7 +9,7 @@ $(document).ready(function() {
       return $('#typeWrapper').removeClass('hide');
     }
   });
-  $('#newURLButton').click(function() {
+  return $('#newURLButton').click(function() {
     var URL, data, jsonError;
     event.preventDefault();
     $('.newURLAlert').addClass('hide');
@@ -28,7 +28,6 @@ $(document).ready(function() {
         return;
       }
     }
-    console.log($('#newURLForm').serialize());
     return $.post('/add', $('#newURLForm').serialize()).done(function() {
       var URLCell, averageCell, dataCell, durationsCell, row, type, typeCell;
       $('#newURLSuccess').removeClass('hide');
@@ -47,12 +46,6 @@ $(document).ready(function() {
       return $('#URLTable').append(row);
     }).fail(function(requestError) {
       return $("#" + requestError['responseText']).removeClass('hide');
-    });
-  });
-  return $('#runChecksButton').click(function() {
-    event.preventDefault();
-    return $.get('/run', {}).done(function() {
-      return $('#checkRunAlert').removeClass('hide');
     });
   });
 });

@@ -1,20 +1,12 @@
 <html>
 <head>
   <%- include('header') %>
-  <!-- Custom frontend JS -->
-  <script type="text/javascript" src="js/by-url.js"></script>
 </head>
 <body>
   <%- include('navbar') %>
   <div class="container">
-    <form>
-      <input type="submit" value="Run checks" id="runChecksButton">
-      <div class="alert alert-success hide" role="alert" id="checkRunAlert">
-        Checks started to run - refresh the page in a few minutes for updated results.
-      </div>
-    </form>
+    <h2>Statistics per URL</h2>
     <table id="URLTable" border="1">
-      <caption>Arranged by URLs</caption>
       <tr>
         <th>URL</th>
         <th>Type</th>
@@ -34,8 +26,8 @@
         <% }
       } %>
     </table>
+    <h2>Statistics per timestamp</h2>
     <table border="1">
-      <caption>Arranged by timestamps</caption>
       <tr>
         <th>Timestamp</th>
         <th>Durations</th>

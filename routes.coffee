@@ -85,8 +85,7 @@ module.exports = (app) ->
   app.get '/run', (req, res) ->
     timestamp = "#{Math.floor new Date() / 1000}"
     runChecks req.db, timestamp
-    res.sendStatus 200
-    db = req.db
+    res.redirect '/'
 
   app.get '/', (req, res) ->
     db = req.db
@@ -215,6 +214,14 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
           if error
             console.log 'ERROR: the database could not be updated'
             return
+          newRecord = { url: url, type: requestType }
+          newRecord[metricString] = metricValue
+          recordsObject['records'].push newRecord
+          ###
+          Use the snippet below if it is needed to store top X URLs in the
+          performance dashboard, instead of storing all like we currently do.
+          The snippet below would replace the three lines above.
+          ______________________________________________________________________
           min = recordsObject['min']
           newRecord = { url: url, type: requestType }
           newRecord[metricString] = metricValue
@@ -232,6 +239,7 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
                 if newMin > recordsObject['records'][index][metricString]
                   newMin = recordsObject['records'][index][metricString]
               recordsObject['min'] = newMin
+          ###
           metrics.update { _id: recordsObject['_id'] }, recordsObject)
 
   # update the (timestamp -> data) collection with new measurement
