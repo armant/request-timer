@@ -89,17 +89,26 @@ module.exports = (app) ->
 
   app.get '/', (req, res) ->
     db = req.db
-    metrics = db.get 'metrics'
-    metrics.findOne {metric: 'duration'}, (error, slowestDurations) ->
-      if error
-        console.log 'ERROR: the database could not be accessed'
-      metrics.findOne {metric: 'variance'}, (error, mostVaryingDurations) ->
+    allDurations = db.get('alldurations')
+    allDurations.count {}, (error, totalCount) ->
+      metrics = db.get 'metrics'
+      metrics.findOne {metric: 'duration'}, (error, slowestDurations) ->
         if error
           console.log 'ERROR: the database could not be accessed'
-        context =
-          slowestDurations: slowestDurations
-          mostVaryingDurations: mostVaryingDurations
-        res.render 'dashboard.ejs', context
+          return
+        metrics.findOne {metric: 'variance'}, (error, mostVaryingDurations) ->
+          if error
+            console.log 'ERROR: the database could not be accessed'
+            return
+          progressPercentage = Math.floor Math.min(
+              slowestDurations['records'].length,
+              mostVaryingDurations['records'].length) / totalCount * 100
+          console.log progressPercentage
+          context =
+            progressPercentage: progressPercentage
+            slowestDurations: slowestDurations
+            mostVaryingDurations: mostVaryingDurations
+          res.render 'dashboard.ejs', context
 
 
 runChecks = (db, timestamp) ->

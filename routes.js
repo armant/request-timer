@@ -107,27 +107,36 @@ module.exports = function(app) {
     return res.redirect('/');
   });
   return app.get('/', function(req, res) {
-    var db, metrics;
+    var allDurations, db;
     db = req.db;
-    metrics = db.get('metrics');
-    return metrics.findOne({
-      metric: 'duration'
-    }, function(error, slowestDurations) {
-      if (error) {
-        console.log('ERROR: the database could not be accessed');
-      }
+    allDurations = db.get('alldurations');
+    return allDurations.count({}, function(error, totalCount) {
+      var metrics;
+      metrics = db.get('metrics');
       return metrics.findOne({
-        metric: 'variance'
-      }, function(error, mostVaryingDurations) {
-        var context;
+        metric: 'duration'
+      }, function(error, slowestDurations) {
         if (error) {
           console.log('ERROR: the database could not be accessed');
+          return;
         }
-        context = {
-          slowestDurations: slowestDurations,
-          mostVaryingDurations: mostVaryingDurations
-        };
-        return res.render('dashboard.ejs', context);
+        return metrics.findOne({
+          metric: 'variance'
+        }, function(error, mostVaryingDurations) {
+          var context, progressPercentage;
+          if (error) {
+            console.log('ERROR: the database could not be accessed');
+            return;
+          }
+          progressPercentage = Math.floor(Math.min(slowestDurations['records'].length, mostVaryingDurations['records'].length) / totalCount * 100);
+          console.log(progressPercentage);
+          context = {
+            progressPercentage: progressPercentage,
+            slowestDurations: slowestDurations,
+            mostVaryingDurations: mostVaryingDurations
+          };
+          return res.render('dashboard.ejs', context);
+        });
       });
     });
   });

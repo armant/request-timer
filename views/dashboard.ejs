@@ -5,6 +5,19 @@
 <body>
   <%- include('navbar') %>
   <div class="container">
+    <% if (progressPercentage < 100) {
+      var progressBarClass = 'progress-bar-striped active';
+      var checkRunMessage = 'Run in progress. Please refresh in a few moments for results.';
+    } else {
+      var checkRunMessage = 'Run is completed.';
+    } %>
+    <h4><%= checkRunMessage %></h4>
+    <div class="progress">
+      <div class="progress-bar progress-bar-success <%= progressBarClass %>" role="progressbar" aria-valuenow="<%= progressPercentage %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= progressPercentage %>%">
+        <span class="sr-only">40% Complete (success)</span>
+        <%= progressPercentage %>%
+      </div>
+    </div>
     <h2>Data for the latest run</h2>
     <table border="1">
       <caption>Slowest requests</caption>
