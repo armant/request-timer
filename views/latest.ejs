@@ -1,0 +1,46 @@
+<html>
+<head>
+  <%- include('header') %>
+  <script src="js/tablesorter.min.js"></script>
+  <link href="css/tablesorter.css" rel="stylesheet">
+</head>
+<body>
+  <%- include('navbar') %>
+  <div class="container">
+    <% if (progressPercentage < 100) {
+      var progressBarClass = 'progress-bar-striped active';
+      var checkRunMessage = 'Run in progress. Please refresh in a few moments for results.';
+    } else {
+      var checkRunMessage = 'Run is completed.';
+    } %>
+    <h4><%= checkRunMessage %></h4>
+    <div class="progress">
+      <div class="progress-bar progress-bar-success <%= progressBarClass %>" role="progressbar" aria-valuenow="<%= progressPercentage %>" aria-valuemin="0" aria-valuemax="100" style="width: <%= progressPercentage %>%">
+        <span class="sr-only">40% Complete (success)</span>
+        <%= progressPercentage %>%
+      </div>
+    </div>
+    <h2>Data for the latest run</h2>
+    <table class="table tablesorter">
+      <thead>
+        <tr>
+          <% var headers = ['URL', 'Type', 'Status code', 'Latest duration (ms)', 'Last ' + NUM_OF_LAST_RUNS + ' runs duration average (ms)', 'Latest time variance', 'Latest response size (bytes)', 'Last ' + NUM_OF_LAST_RUNS + ' runs response size average (bytes)'];
+          for (var i=0; i < headers.length; i++) { %>
+            <th><%= headers[i] %></th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% var keywords = ['url', 'type', 'statusCode', 'time', 'previousTimeAverage', 'variance', 'size', 'previousSizeAverage'];
+        for (var i=0; i < data['responseRecords'].length; i++) { %>
+          <tr>
+            <% for (var j=0; j < keywords.length; j++) { %>
+              <td><%= data['responseRecords'][i][keywords[j]] %></td>
+            <% } %>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
