@@ -3,22 +3,25 @@ var isUrlValid;
 
 $(document).ready(function() {
   $('#type').change(function() {
-    if ($(this).val() === 'GET') {
+    var type;
+    type = $(this).val();
+    if (type === 'GET') {
       return $('#dataWrapper').addClass('hide');
-    } else if ($(this).val() === 'POST') {
+    } else if (type === 'POST') {
       return $('#dataWrapper').removeClass('hide');
     }
   });
   $('#newURLButton').click(function() {
-    var data, jsonError, url;
+    var data, jsonError, type, url;
     event.preventDefault();
     $('.urlAlert').addClass('hide');
     url = $('#url').val();
+    type = $('#type').val();
     if (!isUrlValid(url)) {
       $('#newURLErrorURL').removeClass('hide');
       return;
     }
-    data = $('#data').val();
+    data = type === 'GET' ? '' : $('#data').val();
     if (data) {
       try {
         $.parseJSON(data);
@@ -29,15 +32,21 @@ $(document).ready(function() {
       }
     }
     return $.post('/add-url', $('#newURLForm').serialize()).done(function(newUrlId) {
-      var actionCell, buttonGrouper, dataCell, deleteButton, row, type, typeCell, updateButton, urlCell;
-      $('#newURLSuccess').removeClass('hide');
+      var actionCell, buttonGrouper, dataCell, deleteButton, row, typeCell, updateButton, urlCell;
+      if ($('#rowToDelete').length) {
+        $('#rowToDelete').remove();
+        $('#updateURLSuccess').removeClass('hide');
+      } else {
+        $('#newURLSuccess').removeClass('hide');
+      }
       urlCell = document.createElement('td');
+      $(urlCell).addClass('tableUrl');
       $(urlCell).append(url);
       typeCell = document.createElement('td');
-      type = $('#type').val();
+      $(typeCell).addClass('tableType');
       $(typeCell).append(type);
       dataCell = document.createElement('td');
-      data = $('#data').val();
+      $(dataCell).addClass('tableData');
       $(dataCell).append(data);
       actionCell = document.createElement('td');
       updateButton = document.createElement('button');
@@ -68,7 +77,27 @@ $(document).ready(function() {
       return $("#" + requestError['responseText']).removeClass('hide');
     });
   });
-  $('body').delegate('.deleteUrl', 'click', function() {
+  $('body').delegate('.updateUrl', 'click', function() {
+    var _id, data, rowDom, type, url;
+    $('.urlAlert').addClass('hide');
+    rowDom = $(this).closest('tr');
+    rowDom.attr('id', 'rowToDelete');
+    url = $(rowDom.find('.tableUrl')[0]).text();
+    type = $(rowDom.find('.tableType')[0]).text();
+    data = $(rowDom.find('.tableData')[0]).text();
+    _id = $(this).data('url-id');
+    $('#url').val(url);
+    $('#type').val(type);
+    $('#data').val(data);
+    $('#_id').val(_id);
+    if (type === 'GET') {
+      $('#dataWrapper').addClass('hide');
+    } else if (type === 'POST') {
+      $('#dataWrapper').removeClass('hide');
+    }
+    return window.scrollTo(0, $('#newURLForm').offset());
+  });
+  return $('body').delegate('.deleteUrl', 'click', function() {
     var _id, rowDom;
     $('.urlAlert').addClass('hide');
     _id = $(this).data('url-id');
@@ -80,9 +109,6 @@ $(document).ready(function() {
     }).fail(function() {
       return $('#deleteUrlError').removeClass('hide');
     });
-  });
-  return $('.updateUrl').click(function() {
-    return console.log($(this).data('url-id'));
   });
 });
 

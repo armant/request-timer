@@ -94,10 +94,11 @@ module.exports = function(app) {
     });
   });
   app.post('/add-url', urlencodedParserLib, function(req, res) {
-    var allDurations, data, db, type, url;
+    var _id, allDurations, data, db, type, url;
     url = req.body.url;
     type = req.body.type;
-    data = req.body.data;
+    data = type === 'GET' ? '' : req.body.data;
+    _id = req.body._id;
     if (!validUrlLib.isUri(url)) {
       res.status(500).send('newURLErrorURL');
       return;
@@ -118,7 +119,8 @@ module.exports = function(app) {
     allDurations = db.get('alldurations');
     return allDurations.findOne({
       url: url,
-      type: type
+      type: type,
+      data: data
     }, function(error, result) {
       var urlEntry;
       if (error) {
@@ -129,6 +131,13 @@ module.exports = function(app) {
         res.status(500).send('newURLErrorDuplicate');
         return;
       }
+      allDurations.remove({
+        _id: _id
+      }, function(error, removed) {
+        if (error) {
+          res.status(500).send('newURLErrorSave');
+        }
+      });
       urlEntry = {
         url: url,
         type: type,

@@ -77,7 +77,8 @@ module.exports = (app) ->
   app.post '/add-url', urlencodedParserLib, (req, res) ->
     url = req.body.url
     type = req.body.type
-    data = req.body.data
+    data = if type is 'GET' then '' else req.body.data
+    _id = req.body._id
     if not validUrlLib.isUri(url)
       res.status(500).send 'newURLErrorURL'
       return
@@ -93,13 +94,17 @@ module.exports = (app) ->
 
     db = req.db
     allDurations = db.get 'alldurations'
-    allDurations.findOne {url: url, type: type}, (error, result) ->
+    allDurations.findOne {url: url, type: type, data: data}, (error, result) ->
       if error
         res.status(500).send 'newURLErrorSave'
         return
       if result
         res.status(500).send 'newURLErrorDuplicate'
         return
+      allDurations.remove {_id: _id}, (error, removed) ->
+        if error
+          res.status(500).send 'newURLErrorSave'
+          return
       urlEntry =
         url: url
         type: type

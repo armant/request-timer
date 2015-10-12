@@ -9,21 +9,21 @@
   <%- include('navbar') %>
   <div class="container">
     <form id="newURLForm">
-      <h2>New URL</h2>
       <div>
         <label for="url">URL:</label><input type="url" id="url" name="url">
       </div>
       <div>
         <label for="type">Type:</label>
-      <select id="type" name="type">
-        <option value="GET">GET</option>
-        <option value="POST">POST</option>
-      </select>
+        <select id="type" name="type">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
       </div>
       <div class="hide" id="dataWrapper">
         <label for="data">Data:</label><textarea id="data" name="data" placeholder="Enter a valid JSON object"></textarea>
       </div>
-      <input type="submit" value="Add" id="newURLButton">
+      <input type="hidden" id="_id" name="_id">
+      <input type="submit" value="Add/Update" id="newURLButton">
       <div class="alert alert-danger urlAlert hide" role="alert" id="newURLErrorURL">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         The URL is malformed; please try again with a correct URL.
@@ -36,19 +36,21 @@
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         The data is malformed; please try again with a properly formatted JSON.
       </div>
-      <div class="alert alert-success urlAlert hide" role="alert" id="newURLSuccess">
-        URL added.
-      </div>
       <div class="alert alert-warning urlAlert hide" role="alert" id="newURLErrorDuplicate">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-        The URL has already been added.
+        This URL/type/data combination has already been added.
       </div>
       <div class="alert alert-danger urlAlert hide" role="alert" id="newURLErrorSave">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         Failed to save the URL; please try again.
       </div>
+      <div class="alert alert-success urlAlert hide" role="alert" id="newURLSuccess">
+        URL added.
+      </div>
+      <div class="alert alert-success urlAlert hide" role="alert" id="updateURLSuccess">
+        URL updated.
+      </div>
     </form>
-    <h2>Update/delete</h2>
     <table class="table tablesorter">
       <thead>
         <th>URL</th>
@@ -59,9 +61,9 @@
       <tbody id="urlTableBody">
         <% for (var i=0; i < urlRecords.length; i++) { %>
           <tr>
-            <td><%= urlRecords[i]['url'] %></td>
-            <td><%= urlRecords[i]['type'] %></td>
-            <td><%= urlRecords[i]['data'] %></td>
+            <td class='tableUrl'><%= urlRecords[i]['url'] %></td>
+            <td class='tableType'><%= urlRecords[i]['type'] %></td>
+            <td class='tableData'><%= urlRecords[i]['data'] %></td>
             <td>
               <div class="btn-group" role="group">
                 <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default updateUrl">Update</button>
