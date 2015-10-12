@@ -22,20 +22,39 @@ TIMEOUT = 10000
 asyncLib = require 'async'
 # library for sending HTTP requests
 requestLib = require 'request'
-# create application/x-www-form-urlencoded parser from request.body
+# library for application/x-www-form-urlencoded parser from request.body
 urlencodedParserLib = require('body-parser').urlencoded { extended: false }
+# library for JSON parser from request.body
+jsonParserLib = require('body-parser').urlencoded { extended: false }
 # URL parsing library
 urlLib = require 'url'
 # URL validation library
 validUrlLib = require 'valid-url'
 
 module.exports = (app) ->
+  app.get '/', (req, res) ->
+    db = req.db
+    allDurations = db.get 'alldurations'
+    allDurations.count {}, (error, totalCount) ->
+      db.get('dataByTimestamp').find(
+        {},
+        {limit: 1, sort: {_id: -1}},
+        (error, resultArray) ->
+          lastRecord = resultArray[0]
+          progressPercentage = Math.floor(
+              lastRecord['responseRecords'].length / totalCount * 100)
+          context =
+            data: lastRecord
+            progressPercentage: progressPercentage
+            NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
+          res.render 'latest.ejs', context)
+
   app.get '/data-by-url', (req, res) ->
     db = req.db
     allDurations = db.get 'alldurations'
-    allDurations.find {}, {}, (e, durations) ->
+    allDurations.find {}, {}, (e, urlRecords) ->
       context =
-        'durations': durations
+        'urlRecords': urlRecords
         'NUM_OF_LAST_RUNS': NUM_OF_LAST_RUNS
       res.render 'by-url.ejs', context
 
@@ -47,7 +66,15 @@ module.exports = (app) ->
         'dataByTimestamp': dataByTimestamp
       res.render 'by-timestamp.ejs', context
 
-  app.post '/add', urlencodedParserLib, (req, res) ->
+  app.get '/crud', (req, res) ->
+    db = req.db
+    allDurations = db.get 'alldurations'
+    allDurations.find {}, {}, (e, urlRecords) ->
+      context =
+        urlRecords: urlRecords
+      res.render 'crud.ejs', context
+
+  app.post '/add-url', urlencodedParserLib, (req, res) ->
     url = req.body.url
     type = req.body.type
     data = req.body.data
@@ -78,33 +105,24 @@ module.exports = (app) ->
         type: type
         data: data
         durations: []
-      allDurations.insert urlEntry, (error, result) ->
+      allDurations.insert urlEntry, (error, insertedUrlObject) ->
         if error
           res.status(500).send 'newURLErrorSave'
           return
-        res.sendStatus 200
+        res.send insertedUrlObject['_id']
+
+  app.post '/delete-url', jsonParserLib, (req, res) ->
+    db = req.db
+    allDurations = db.get 'alldurations'
+    allDurations.remove req.body, (error, removed) ->
+      if error
+        res.sendStatus 500
+      res.sendStatus 200
 
   app.get '/run', (req, res) ->
     timestamp = "#{Math.floor new Date() / 1000}"
     runChecks req.db, timestamp
     res.redirect '/'
-
-  app.get '/', (req, res) ->
-    db = req.db
-    allDurations = db.get('alldurations')
-    allDurations.count {}, (error, totalCount) ->
-      db.get('dataByTimestamp').find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
-        lastRecord = resultArray[0]
-        progressPercentage = Math.floor lastRecord['responseRecords'].length / totalCount * 100
-        context =
-          data: lastRecord
-          progressPercentage: progressPercentage
-          NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-        res.render 'latest.ejs', context
-
-  app.get '/crud', (req, res) ->
-    context = {}
-    res.render 'crud.ejs', context
 
 runChecks = (db, timestamp) ->
   byTimestamp = db.get 'dataByTimestamp'
@@ -114,20 +132,20 @@ runChecks = (db, timestamp) ->
   byTimestamp.insert timestampRecord
 
   allDurations = db.get 'alldurations'
-  allDurations.find {}, {}, (e, durations) ->
-    asyncLib.series durations.map (duration) ->
+  allDurations.find {}, {}, (e, urlRecords) ->
+    asyncLib.series urlRecords.map (urlRecords) ->
       (callbackOuter) ->
-        url = duration['url']
+        url = urlRecords['url']
         options =
           uri: url
           time: true
           timeout: TIMEOUT
-        requestType = duration['type']
+        requestType = urlRecords['type']
         if requestType is 'GET'
           requestCallerFunction = (requestCallerCallback) ->
             requestLib options, requestCallerCallback
         else if requestType is 'POST'
-          data = duration['data']
+          data = urlRecords['data']
           requestCallerFunction = (requestCallerCallback) ->
             requestLib.post options, data, requestCallerCallback
         executeRequests(requestCallerFunction,
@@ -181,7 +199,8 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
         return
       previousTimeAverage = durationsObject['lastDurationsAverage']
       previousSizeAverage = durationsObject['lastSizesAverage']
-      variance = (currentDuration / durationsObject['lastDurationsAverage']).toFixed(2)
+      variance = (currentDuration / durationsObject['lastDurationsAverage'])
+          .toFixed(2)
       responseRecord['previousTimeAverage'] = previousTimeAverage
       responseRecord['previousSizeAverage'] = previousSizeAverage
       responseRecord['variance'] = variance
@@ -207,7 +226,8 @@ addDuration = (db, url, requestType, responseRecords, timestamp) ->
             sumDurations += responseRecord['time']
             sumSizes += responseRecord['size']
             recordCount++
-      durationsObject['lastDurationsAverage'] = Math.floor sumDurations / recordCount
+      durationsObject['lastDurationsAverage'] = Math.floor(
+          sumDurations / recordCount)
       durationsObject['lastSizesAverage'] = Math.floor sumSizes / recordCount
       allDurations.update { _id: durationsObject['_id'] }, durationsObject)
 
