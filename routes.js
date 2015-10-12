@@ -34,37 +34,40 @@ validUrlLib = require('valid-url');
 
 module.exports = function(app) {
   app.get('/', function(req, res) {
-    var allDurations, db;
+    var byTimestamp, db;
     db = req.db;
-    allDurations = db.get('alldurations');
-    return allDurations.count({}, function(error, totalCount) {
-      return db.get('dataByTimestamp').find({}, {
-        limit: 1,
-        sort: {
-          _id: -1
-        }
-      }, function(error, resultArray) {
-        var context, lastRecord, progressPercentage;
-        lastRecord = resultArray[0];
-        progressPercentage = Math.floor(lastRecord['responseRecords'].length / totalCount * 100);
-        context = {
-          data: lastRecord,
-          progressPercentage: progressPercentage,
-          NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-        };
-        return res.render('latest.ejs', context);
-      });
+    byTimestamp = db.get('byTimestamp');
+    return byTimestamp.find({}, {
+      limit: 1,
+      sort: {
+        _id: -1
+      }
+    }, function(error, resultArray) {
+      var context, lastRecord, progressPercentage, urlCount;
+      lastRecord = resultArray[0];
+      if (lastRecord) {
+        urlCount = lastRecord['urlCount'];
+        progressPercentage = Math.floor(lastRecord['responseRecords'].length / urlCount * 100);
+      } else {
+        progressPercentage = 100;
+      }
+      context = {
+        data: lastRecord,
+        progressPercentage: progressPercentage,
+        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
+      };
+      return res.render('latest.ejs', context);
     });
   });
   app.get('/data-by-url', function(req, res) {
-    var allDurations, db;
+    var byUrl, db;
     db = req.db;
-    allDurations = db.get('alldurations');
-    return allDurations.find({}, {}, function(e, urlRecords) {
+    byUrl = db.get('byUrl');
+    return byUrl.find({}, {}, function(e, urlRecords) {
       var context;
       context = {
-        'urlRecords': urlRecords,
-        'NUM_OF_LAST_RUNS': NUM_OF_LAST_RUNS
+        urlRecords: urlRecords,
+        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
       };
       return res.render('by-url.ejs', context);
     });
@@ -72,20 +75,20 @@ module.exports = function(app) {
   app.get('/data-by-timestamp', function(req, res) {
     var byTimestamp, db;
     db = req.db;
-    byTimestamp = db.get('dataByTimestamp');
+    byTimestamp = db.get('byTimestamp');
     return byTimestamp.find({}, {}, function(e, dataByTimestamp) {
       var context;
       context = {
-        'dataByTimestamp': dataByTimestamp
+        dataByTimestamp: dataByTimestamp
       };
       return res.render('by-timestamp.ejs', context);
     });
   });
   app.get('/crud', function(req, res) {
-    var allDurations, db;
+    var byUrl, db;
     db = req.db;
-    allDurations = db.get('alldurations');
-    return allDurations.find({}, {}, function(e, urlRecords) {
+    byUrl = db.get('byUrl');
+    return byUrl.find({}, {}, function(e, urlRecords) {
       var context;
       context = {
         urlRecords: urlRecords
@@ -94,7 +97,7 @@ module.exports = function(app) {
     });
   });
   app.post('/add-url', urlencodedParserLib, function(req, res) {
-    var _id, allDurations, data, db, type, url;
+    var _id, byUrl, data, db, type, url;
     url = req.body.url;
     type = req.body.type;
     data = type === 'GET' ? '' : req.body.data;
@@ -116,8 +119,8 @@ module.exports = function(app) {
       }
     }
     db = req.db;
-    allDurations = db.get('alldurations');
-    return allDurations.findOne({
+    byUrl = db.get('byUrl');
+    return byUrl.findOne({
       url: url,
       type: type,
       data: data
@@ -131,7 +134,7 @@ module.exports = function(app) {
         res.status(500).send('newURLErrorDuplicate');
         return;
       }
-      allDurations.remove({
+      byUrl.remove({
         _id: _id
       }, function(error, removed) {
         if (error) {
@@ -144,7 +147,7 @@ module.exports = function(app) {
         data: data,
         durations: []
       };
-      return allDurations.insert(urlEntry, function(error, insertedUrlObject) {
+      return byUrl.insert(urlEntry, function(error, insertedUrlObject) {
         if (error) {
           res.status(500).send('newURLErrorSave');
           return;
@@ -154,10 +157,10 @@ module.exports = function(app) {
     });
   });
   app.post('/delete-url', jsonParserLib, function(req, res) {
-    var allDurations, db;
+    var byUrl, db;
     db = req.db;
-    allDurations = db.get('alldurations');
-    return allDurations.remove(req.body, function(error, removed) {
+    byUrl = db.get('byUrl');
+    return byUrl.remove(req.body, function(error, removed) {
       if (error) {
         res.sendStatus(500);
       }
@@ -165,50 +168,51 @@ module.exports = function(app) {
     });
   });
   return app.get('/run', function(req, res) {
-    var timestamp;
-    timestamp = "" + (Math.floor(new Date() / 1000));
-    runChecks(req.db, timestamp);
+    runChecks(req.db);
     return res.redirect('/');
   });
 };
 
-runChecks = function(db, timestamp) {
-  var allDurations, byTimestamp, timestampRecord;
-  byTimestamp = db.get('dataByTimestamp');
-  timestampRecord = {
-    timestamp: timestamp,
-    responseRecords: []
-  };
-  byTimestamp.insert(timestampRecord);
-  allDurations = db.get('alldurations');
-  return allDurations.find({}, {}, function(e, urlRecords) {
-    return asyncLib.series(urlRecords.map(function(urlRecords) {
+runChecks = function(db) {
+  var byTimestamp, byUrl;
+  byUrl = db.get('byUrl');
+  byTimestamp = db.get('byTimestamp');
+  return byUrl.find({}, {}, function(e, urlRecords) {
+    var timestamp, timestampRecord;
+    timestamp = "" + (Math.floor(new Date() / 1000));
+    timestampRecord = {
+      timestamp: timestamp,
+      responseRecords: [],
+      urlCount: urlRecords.length
+    };
+    byTimestamp.insert(timestampRecord);
+    return asyncLib.series(urlRecords.map(function(urlRecord) {
       return function(callbackOuter) {
         var data, options, requestCallerFunction, requestType, url;
-        url = urlRecords['url'];
+        url = urlRecord['url'];
+        requestType = urlRecord['type'];
+        data = urlRecord['data'];
         options = {
           uri: url,
           time: true,
           timeout: TIMEOUT
         };
-        requestType = urlRecords['type'];
         if (requestType === 'GET') {
           requestCallerFunction = function(requestCallerCallback) {
             return requestLib(options, requestCallerCallback);
           };
         } else if (requestType === 'POST') {
-          data = urlRecords['data'];
           requestCallerFunction = function(requestCallerCallback) {
             return requestLib.post(options, data, requestCallerCallback);
           };
         }
-        return executeRequests(requestCallerFunction, db, url, requestType, timestamp, callbackOuter);
+        return executeRequests(requestCallerFunction, db, url, requestType, data, timestamp, callbackOuter);
       };
     }));
   });
 };
 
-executeRequests = function(requestCallerFunction, db, url, requestType, timestamp, callbackOuter) {
+executeRequests = function(requestCallerFunction, db, url, requestType, data, timestamp, callbackOuter) {
   var i, responseRecords, results1;
   responseRecords = [];
   return asyncLib.series((function() {
@@ -219,26 +223,23 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
     return function(callbackInner) {
       return requestCallerFunction(function(error, response, body) {
         var responseRecord;
-        if (error) {
-          responseRecord = {
-            url: url,
-            type: requestType,
-            time: null,
-            statusCode: null,
-            size: null
-          };
-        } else {
-          responseRecord = {
-            url: url,
-            type: requestType,
-            time: response.elapsedTime,
-            statusCode: response.statusCode,
-            size: body.length
-          };
+        responseRecord = {
+          url: url,
+          type: requestType,
+          data: data,
+          statusCode: null,
+          time: null,
+          size: null,
+          timestamp: timestamp
+        };
+        if (!error) {
+          responseRecord['statusCode'] = response.statusCode;
+          responseRecord['time'] = response.elapsedTime;
+          responseRecord['size'] = body.length;
         }
         responseRecords.push(responseRecord);
         if (responseRecords.length === NUM_OF_REQUESTS) {
-          addDuration(db, url, requestType, responseRecords, timestamp);
+          addDuration(db, url, requestType, data, responseRecords, timestamp);
           responseRecords = [];
         }
         return callbackInner(null);
@@ -249,19 +250,20 @@ executeRequests = function(requestCallerFunction, db, url, requestType, timestam
   });
 };
 
-addDuration = function(db, url, requestType, responseRecords, timestamp) {
-  var allDurations, byTimestamp, currentDuration, responseRecord;
+addDuration = function(db, url, requestType, data, responseRecords, timestamp) {
+  var byTimestamp, byUrl, currentDuration, responseRecord;
   responseRecord = findMedianRecord(responseRecords);
   currentDuration = responseRecord['time'];
   console.log(url);
   console.log(responseRecords);
   console.log(responseRecord);
-  allDurations = db.get('alldurations');
-  allDurations.findOne({
+  byUrl = db.get('byUrl');
+  byUrl.findOne({
     url: url,
-    type: requestType
+    type: requestType,
+    data: data
   }, function(error, durationsObject) {
-    var durationObject, i, lastDurations, len, newDuration, previousSizeAverage, previousTimeAverage, recordCount, sumDurations, sumSizes, variance;
+    var i, lastDurations, len, previousSizeAverage, previousTimeAverage, recordCount, sumDurations, sumSizes, variance;
     if (error) {
       console.log('ERROR: the database could be updated');
       return;
@@ -273,34 +275,29 @@ addDuration = function(db, url, requestType, responseRecords, timestamp) {
     responseRecord['previousSizeAverage'] = previousSizeAverage;
     responseRecord['variance'] = variance;
     if (previousTimeAverage * ALERT_MULTIPLE < currentDuration) {
-      console.log("ALERT FIRED: " + url + " request duration of " + currentDuration + " exceeded the last " + NUM_OF_LAST_RUNS + "-check average of " + average + " more than " + ALERT_MULTIPLE + " times");
+      console.log("ALERT FIRED: " + url + " request duration of " + currentDuration + " exceeded the last " + NUM_OF_LAST_RUNS + "-check average of " + previousTimeAverage + " more than " + ALERT_MULTIPLE + " times");
     }
-    newDuration = {};
-    newDuration[timestamp] = responseRecord;
-    durationsObject['durations'].push(newDuration);
+    durationsObject['durations'].push(responseRecord);
     durationsObject['lastDurations'] = durationsObject['durations'].slice(-NUM_OF_LAST_RUNS);
     lastDurations = durationsObject['lastDurations'];
     sumDurations = 0;
     sumSizes = 0;
     recordCount = 0;
     for (i = 0, len = lastDurations.length; i < len; i++) {
-      durationObject = lastDurations[i];
-      for (timestamp in durationObject) {
-        responseRecord = durationObject[timestamp];
-        if (responseRecord['time'] && responseRecord['size']) {
-          sumDurations += responseRecord['time'];
-          sumSizes += responseRecord['size'];
-          recordCount++;
-        }
+      responseRecord = lastDurations[i];
+      if (responseRecord['time'] && responseRecord['size']) {
+        sumDurations += responseRecord['time'];
+        sumSizes += responseRecord['size'];
+        recordCount++;
       }
     }
     durationsObject['lastDurationsAverage'] = Math.floor(sumDurations / recordCount);
     durationsObject['lastSizesAverage'] = Math.floor(sumSizes / recordCount);
-    return allDurations.update({
+    return byUrl.update({
       _id: durationsObject['_id']
     }, durationsObject);
   });
-  byTimestamp = db.get('dataByTimestamp');
+  byTimestamp = db.get('byTimestamp');
   return byTimestamp.findOne({
     timestamp: timestamp
   }, function(error, timestampRecord) {
