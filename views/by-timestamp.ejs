@@ -17,7 +17,7 @@
         <% if (dataByTimestamp) {
           for (var i=dataByTimestamp.length - 1; i>=0; i--) { %>
             <tr>
-              <td><%= dataByTimestamp[i]['timestamp'] %></td>
+              <td><%= new Date(parseFloat(dataByTimestamp[i]['timestamp'])) %></td>
               <td><%= JSON.stringify(dataByTimestamp[i]['responseRecords']) %></td>
             </tr>
           <% }

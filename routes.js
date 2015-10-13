@@ -179,7 +179,7 @@ runChecks = function(db) {
   byTimestamp = db.get('byTimestamp');
   return byUrl.find({}, {}, function(e, urlRecords) {
     var timestamp, timestampRecord;
-    timestamp = "" + (Math.floor(new Date() / 1000));
+    timestamp = "" + (new Date().getTime());
     timestampRecord = {
       timestamp: timestamp,
       responseRecords: [],

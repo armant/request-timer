@@ -135,7 +135,7 @@ runChecks = (db) ->
   byUrl = db.get 'byUrl'
   byTimestamp = db.get 'byTimestamp'
   byUrl.find {}, {}, (e, urlRecords) ->
-    timestamp = "#{Math.floor new Date() / 1000}"
+    timestamp = "#{new Date().getTime()}"
     timestampRecord =
       timestamp: timestamp
       responseRecords: []
