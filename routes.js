@@ -249,7 +249,7 @@ executeRequests = function(requestCallerFunction, db, url, requestType, data, ti
           url: url,
           type: requestType,
           data: data,
-          statusCode: null,
+          statusCode: -1,
           time: null,
           size: null,
           timestamp: timestamp
