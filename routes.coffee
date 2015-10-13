@@ -57,7 +57,18 @@ module.exports = (app) ->
         progressPercentage: progressPercentage
         NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
         ALERT_MULTIPLE: ALERT_MULTIPLE
-      res.render 'run-data.ejs', context
+      res.render 'timestamp-data.ejs', context
+
+  app.get '/url/:_id', (req, res) ->
+    db = req.db
+    byUrl = db.get 'byUrl'
+    byUrl.findOne {_id: req.params._id}, (error, urlRecord) ->
+      if error
+        res.sendStatus 500
+        return
+      context =
+        data: urlRecord
+      res.render 'url-data.ejs', context
 
   app.get '/timestamps', (req, res) ->
     db = req.db
@@ -73,16 +84,7 @@ module.exports = (app) ->
     byUrl.find {}, {}, (e, urlRecords) ->
       context =
         urlRecords: urlRecords
-      res.render 'crud.ejs', context
-
-  app.get '/data-by-url', (req, res) ->
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.find {}, {}, (e, urlRecords) ->
-      context =
-        urlRecords: urlRecords
-        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-      res.render 'by-url.ejs', context
+      res.render 'urls.ejs', context
 
   app.post '/add-url', urlencodedParserLib, (req, res) ->
     url = req.body.url

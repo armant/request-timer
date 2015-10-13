@@ -39,7 +39,6 @@ $(document).ready ->
         dataCell = document.createElement 'td'
         $(dataCell).addClass 'tableData'
         $(dataCell).append data
-        actionCell = document.createElement 'td'
         updateButton = document.createElement 'button'
         $(updateButton).attr
           'type': 'button'
@@ -57,6 +56,7 @@ $(document).ready ->
           'class': 'btn-group'
           'role': 'group'
         $(buttonGrouper).append updateButton, deleteButton
+        actionCell = document.createElement 'td'
         $(actionCell).append buttonGrouper
         row = document.createElement 'tr'
         $(row).append urlCell, typeCell, dataCell, actionCell

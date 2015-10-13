@@ -3,7 +3,7 @@
   <%- include('header') %>
   <script src="/js/tablesorter.min.js"></script>
   <link href="/css/tablesorter.css" rel="stylesheet">
-  <script src="/js/crud.js"></script>
+  <script src="/js/urls.js"></script>
 </head>
 <body>
   <%- include('navbar') %>
@@ -67,6 +67,7 @@
             <td class='tableData'><%= urlRecords[i]['data'] %></td>
             <td>
               <div class="btn-group" role="group">
+                <button type="button" class="btn btn-default"><a href="/url/<%= urlRecords[i]['_id'] %>">See <%= urlRecords[i]['durations'].length %> runs</a></button>
                 <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default updateUrl">Update</button>
                 <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default deleteUrl">Delete</button>
               </div>

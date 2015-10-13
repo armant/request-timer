@@ -1,0 +1,39 @@
+<html>
+<head>
+  <%- include('header') %>
+  <script src="/js/tablesorter.min.js"></script>
+  <link href="/css/tablesorter.css" rel="stylesheet">
+</head>
+<body>
+  <%- include('navbar') %>
+  <div class="container">
+    <h4><%= data['url'] %></h4>
+    <h4><%= data['type'] %></h4>
+    <h4><%= data['data'] %></h4>
+    <table class="table tablesorter">
+      <thead>
+        <tr>
+          <% var headers = ['Timestamp', 'Status code', 'Duration (ms)',  'Response size (bytes)'];
+          for (var i=0; i < headers.length; i++) { %>
+            <th><%= headers[i] %></th>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (data) {
+          var keywords = ['timestamp', 'statusCode', 'time', 'size'];
+          for (var i=data['durations'].length - 1; i >= 0; i--) {
+            var trClass = data['durations'][i]['statusCode'] === 200 ? 'success' : 'warning'; %>
+            <tr class="<%= trClass %>">
+              <td><%= new Date(parseFloat(data['durations'][i]['timestamp'])) %></td>
+              <td><%= data['durations'][i]['statusCode'] %></td>
+              <td><%= data['durations'][i]['time'] %></td>
+              <td><%= data['durations'][i]['size'] %></td>
+            </tr>
+          <% }
+        } %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

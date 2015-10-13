@@ -23,7 +23,7 @@
     <table class="table tablesorter">
       <thead>
         <tr>
-          <% var headers = ['URL', 'Type', 'Data', 'Status code', 'Latest duration (ms)', 'Last ' + NUM_OF_LAST_RUNS + ' runs duration average (ms)', 'Latest time variance', 'Latest response size (bytes)', 'Last ' + NUM_OF_LAST_RUNS + ' runs response size average (bytes)'];
+          <% var headers = ['URL', 'Type', 'Data', 'Status code', 'Duration (ms)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs duration average (ms)', 'Duration variance', 'Response size (bytes)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs response size average (bytes)'];
           for (var i=0; i < headers.length; i++) { %>
             <th><%= headers[i] %></th>
           <% } %>

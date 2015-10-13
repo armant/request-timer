@@ -6,7 +6,6 @@
 <body>
   <%- include('navbar') %>
   <div class="container">
-    <h2>Data per timestamp</h2>
     <table class="table table-hover">
       <thead>
         <tr>
@@ -16,7 +15,7 @@
       </thead>
       <tbody id="timestampsTableBody">
         <% if (dataByTimestamp) {
-          for (var i=dataByTimestamp.length - 1; i>=0; i--) { %>
+          for (var i=dataByTimestamp.length - 1; i >= 0; i--) { %>
             <tr data-timestamp="<%= dataByTimestamp[i]['timestamp'] %>" >
               <td><%= new Date(parseFloat(dataByTimestamp[i]['timestamp'])) %></td>
               <td><%= dataByTimestamp[i]['responseRecords'].length %></td>

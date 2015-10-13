@@ -73,7 +73,25 @@ module.exports = function(app) {
         NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS,
         ALERT_MULTIPLE: ALERT_MULTIPLE
       };
-      return res.render('run-data.ejs', context);
+      return res.render('timestamp-data.ejs', context);
+    });
+  });
+  app.get('/url/:_id', function(req, res) {
+    var byUrl, db;
+    db = req.db;
+    byUrl = db.get('byUrl');
+    return byUrl.findOne({
+      _id: req.params._id
+    }, function(error, urlRecord) {
+      var context;
+      if (error) {
+        res.sendStatus(500);
+        return;
+      }
+      context = {
+        data: urlRecord
+      };
+      return res.render('url-data.ejs', context);
     });
   });
   app.get('/timestamps', function(req, res) {
@@ -97,20 +115,7 @@ module.exports = function(app) {
       context = {
         urlRecords: urlRecords
       };
-      return res.render('crud.ejs', context);
-    });
-  });
-  app.get('/data-by-url', function(req, res) {
-    var byUrl, db;
-    db = req.db;
-    byUrl = db.get('byUrl');
-    return byUrl.find({}, {}, function(e, urlRecords) {
-      var context;
-      context = {
-        urlRecords: urlRecords,
-        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-      };
-      return res.render('by-url.ejs', context);
+      return res.render('urls.ejs', context);
     });
   });
   app.post('/add-url', urlencodedParserLib, function(req, res) {
