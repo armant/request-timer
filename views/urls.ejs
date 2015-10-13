@@ -60,20 +60,22 @@
         <th>Action</th>
       </thead>
       <tbody id="urlTableBody">
-        <% for (var i=0; i < urlRecords.length; i++) { %>
-          <tr>
-            <td class='tableUrl'><%= urlRecords[i]['url'] %></td>
-            <td class='tableType'><%= urlRecords[i]['type'] %></td>
-            <td class='tableData'><%= urlRecords[i]['data'] %></td>
-            <td>
-              <div class="btn-group" role="group">
-                <button type="button" class="btn btn-default"><a href="/url/<%= urlRecords[i]['_id'] %>">See <%= urlRecords[i]['durations'].length %> runs</a></button>
-                <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default updateUrl">Update</button>
-                <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default deleteUrl">Delete</button>
-              </div>
-            </td>
-          </tr>
-        <% } %>
+        <% if (urlRecords) {
+          for (var i=0; i < urlRecords.length; i++) { %>
+            <tr>
+              <td class='tableUrl'><%= urlRecords[i]['url'] %></td>
+              <td class='tableType'><%= urlRecords[i]['type'] %></td>
+              <td class='tableData'><%= urlRecords[i]['data'] %></td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" class="btn btn-default"><a href="/url/<%= urlRecords[i]['_id'] %>">See <%= urlRecords[i]['durations'].length %> runs</a></button>
+                  <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default updateUrl">Update</button>
+                  <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default deleteUrl">Delete</button>
+                </div>
+              </td>
+            </tr>
+          <% }
+          } %>
       </tbody>
       <div class="alert alert-danger urlAlert hide" role="alert" id="deleteUrlError">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
