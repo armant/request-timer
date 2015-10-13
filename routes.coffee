@@ -36,28 +36,33 @@ module.exports = (app) ->
     db = req.db
     byTimestamp = db.get 'byTimestamp'
     byTimestamp.find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
-      timestamp = if resultArray.length then resultArray[0]['timestamp'] else ''
+      if resultArray.length
+        timestamp = resultArray[0]['timestamp']
+      else
+        timestamp = 'no-records'
       res.redirect "/timestamp/#{ timestamp }"
 
   app.get '/timestamp/:timestamp', (req, res) ->
     db = req.db
     byTimestamp = db.get 'byTimestamp'
-    byTimestamp.findOne {timestamp: req.params.timestamp}, (error, timestampRecord) ->
-      if error
-        res.sendStatus 500
-        return
-      if timestampRecord
-        totalUrlCount = timestampRecord['urlCount']
-        currentUrlCount = timestampRecord['responseRecords'].length
-        progressPercentage = Math.floor currentUrlCount / totalUrlCount * 100
-      else
-        progressPercentage = 100
-      context =
-        data: timestampRecord
-        progressPercentage: progressPercentage
-        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-        ALERT_MULTIPLE: ALERT_MULTIPLE
-      res.render 'timestamp-data.ejs', context
+    byTimestamp.findOne(
+      {timestamp: req.params.timestamp},
+      (error, timestampRecord) ->
+        if error
+          res.sendStatus 500
+          return
+        if timestampRecord
+          totalUrlCount = timestampRecord['urlCount']
+          currentUrlCount = timestampRecord['responseRecords'].length
+          progressPercentage = Math.floor currentUrlCount / totalUrlCount * 100
+        else
+          progressPercentage = 100
+        context =
+          data: timestampRecord
+          progressPercentage: progressPercentage
+          NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
+          ALERT_MULTIPLE: ALERT_MULTIPLE
+        res.render 'timestamp-data.ejs', context)
 
   app.get '/url/:_id', (req, res) ->
     db = req.db
