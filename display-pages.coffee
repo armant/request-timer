@@ -8,10 +8,7 @@ exports.index = (req, res) ->
   db = req.db
   byTimestamp = db.get 'byTimestamp'
   byTimestamp.find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
-    if resultArray.length
-      timestamp = resultArray[0]['timestamp']
-    else
-      timestamp = 'no-records'
+    timestamp = if resultArray.length then resultArray[0]['timestamp'] else ''
     res.redirect "/timestamp/#{ timestamp }"
 
 exports.showByTimestamp = (req, res) ->

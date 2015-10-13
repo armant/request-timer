@@ -28,13 +28,15 @@ jsonParserLib = require('body-parser').urlencoded({ extended: false });
 
 // Routes
 app.get('/', displayPages.index);
+app.get('/timestamp', displayPages.showTimestamps);
 app.get('/timestamp/:timestamp', displayPages.showByTimestamp);
+app.get('/url', displayPages.showUrls);
 app.get('/url/:_id', displayPages.showByUrl);
-app.get('/timestamps', displayPages.showTimestamps);
-app.get('/urls', displayPages.showUrls);
 
-app.post('/add-url', urlencodedParserLib, manageUrls.addUrl);
-app.post('/delete-url', jsonParserLib, manageUrls.deleteUrl);
+
+
+app.post('/url', urlencodedParserLib, manageUrls.addUrl);
+app.delete('/url', jsonParserLib, manageUrls.deleteUrl);
 
 app.get('/run', runChecks.run);
 

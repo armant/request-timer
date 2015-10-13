@@ -16,11 +16,7 @@ exports.index = function(req, res) {
     }
   }, function(error, resultArray) {
     var timestamp;
-    if (resultArray.length) {
-      timestamp = resultArray[0]['timestamp'];
-    } else {
-      timestamp = 'no-records';
-    }
+    timestamp = resultArray.length ? resultArray[0]['timestamp'] : '';
     return res.redirect("/timestamp/" + timestamp);
   });
 };

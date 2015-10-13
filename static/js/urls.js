@@ -31,7 +31,7 @@ $(document).ready(function() {
         return;
       }
     }
-    return $.post('/add-url', $('#newURLForm').serialize()).done(function(newUrlId) {
+    return $.post('/url', $('#newURLForm').serialize()).done(function(newUrlId) {
       var actionCell, buttonGrouper, dataCell, deleteButton, row, typeCell, updateButton, urlCell;
       if ($('#rowToDelete').length) {
         $('#rowToDelete').remove();
@@ -102,8 +102,12 @@ $(document).ready(function() {
     $('.urlAlert').addClass('hide');
     _id = $(this).data('url-id');
     rowDom = $(this).closest('tr');
-    return $.post('/delete-url', {
-      _id: _id
+    return $.ajax({
+      url: '/url',
+      type: 'DELETE',
+      data: {
+        _id: _id
+      }
     }).done(function() {
       return rowDom.remove();
     }).fail(function() {
