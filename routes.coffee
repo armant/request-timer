@@ -36,7 +36,7 @@ module.exports = (app) ->
     db = req.db
     byTimestamp = db.get 'byTimestamp'
     byTimestamp.find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
-      timestamp = resultArray[0]['timestamp']
+      timestamp = if resultArray then resultArray[0]['timestamp'] else ''
       res.redirect "/timestamp/#{ timestamp }"
 
   app.get '/timestamp/:timestamp', (req, res) ->

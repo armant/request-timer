@@ -44,7 +44,7 @@ module.exports = function(app) {
       }
     }, function(error, resultArray) {
       var timestamp;
-      timestamp = resultArray[0]['timestamp'];
+      timestamp = resultArray ? resultArray[0]['timestamp'] : '';
       return res.redirect("/timestamp/" + timestamp);
     });
   });

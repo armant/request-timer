@@ -1,7 +1,7 @@
 // MongoDB
 var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/requesttimer');
+var db = monk(process.env.MONGOLAB_URI || 'localhost:27017/requesttimer');
 
 // Express
 var express = require('express');
