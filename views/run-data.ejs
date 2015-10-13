@@ -1,17 +1,18 @@
 <html>
 <head>
   <%- include('header') %>
-  <script src="js/tablesorter.min.js"></script>
-  <link href="css/tablesorter.css" rel="stylesheet">
+  <script src="/js/tablesorter.min.js"></script>
+  <link href="/css/tablesorter.css" rel="stylesheet">
 </head>
 <body>
   <%- include('navbar') %>
   <div class="container">
+    <h4><%= new Date(parseFloat(data['timestamp'])) %></h4>
     <% if (progressPercentage < 100) {
       var progressBarClass = 'progress-bar-striped active';
       var checkRunMessage = 'Run in progress. Please refresh in a few moments for results.';
     } else {
-      var checkRunMessage = 'Run is completed.';
+      var checkRunMessage = 'This run is completed.';
     } %>
     <h4><%= checkRunMessage %></h4>
     <div class="progress">
@@ -19,7 +20,6 @@
         <%= progressPercentage %>%
       </div>
     </div>
-    <h2>Data for the latest run</h2>
     <table class="table tablesorter">
       <thead>
         <tr>
@@ -32,8 +32,12 @@
       <tbody>
         <% if (data) {
           var keywords = ['url', 'type', 'data', 'statusCode', 'time', 'previousTimeAverage', 'variance', 'size', 'previousSizeAverage'];
-          for (var i=0; i < data['responseRecords'].length; i++) { %>
-            <tr>
+          for (var i=0; i < data['responseRecords'].length; i++) {
+            var trClass = data['responseRecords'][i]['statusCode'] === 200 ? 'success' : 'warning';
+            if (data['responseRecords'][i]['variance'] >= ALERT_MULTIPLE) {
+              trClass = 'danger';
+            }%>
+            <tr class="<%= trClass %>">
               <% for (var j=0; j < keywords.length; j++) { %>
                 <td><%= data['responseRecords'][i][keywords[j]] %></td>
               <% } %>

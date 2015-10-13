@@ -35,22 +35,45 @@ module.exports = (app) ->
   app.get '/', (req, res) ->
     db = req.db
     byTimestamp = db.get 'byTimestamp'
-    byTimestamp.find(
-      {},
-      {limit: 1, sort: {_id: -1}},
-      (error, resultArray) ->
-        lastRecord = resultArray[0]
-        if lastRecord
-          urlCount = lastRecord['urlCount']
-          progressPercentage = Math.floor(
-              lastRecord['responseRecords'].length / urlCount * 100)
-        else
-          progressPercentage = 100
-        context =
-          data: lastRecord
-          progressPercentage: progressPercentage
-          NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-        res.render 'latest.ejs', context)
+    byTimestamp.find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
+      timestamp = resultArray[0]['timestamp']
+      res.redirect "/timestamp/#{ timestamp }"
+
+  app.get '/timestamp/:timestamp', (req, res) ->
+    db = req.db
+    byTimestamp = db.get 'byTimestamp'
+    byTimestamp.findOne {timestamp: req.params.timestamp}, (error, timestampRecord) ->
+      if error
+        res.sendStatus 500
+        return
+      if timestampRecord
+        totalUrlCount = timestampRecord['urlCount']
+        currentUrlCount = timestampRecord['responseRecords'].length
+        progressPercentage = Math.floor currentUrlCount / totalUrlCount * 100
+      else
+        progressPercentage = 100
+      context =
+        data: timestampRecord
+        progressPercentage: progressPercentage
+        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
+        ALERT_MULTIPLE: ALERT_MULTIPLE
+      res.render 'run-data.ejs', context
+
+  app.get '/timestamps', (req, res) ->
+    db = req.db
+    byTimestamp = db.get 'byTimestamp'
+    byTimestamp.find {}, {}, (e, dataByTimestamp) ->
+      context =
+        dataByTimestamp: dataByTimestamp
+      res.render 'timestamps.ejs', context
+
+  app.get '/urls', (req, res) ->
+    db = req.db
+    byUrl = db.get 'byUrl'
+    byUrl.find {}, {}, (e, urlRecords) ->
+      context =
+        urlRecords: urlRecords
+      res.render 'crud.ejs', context
 
   app.get '/data-by-url', (req, res) ->
     db = req.db
@@ -60,22 +83,6 @@ module.exports = (app) ->
         urlRecords: urlRecords
         NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
       res.render 'by-url.ejs', context
-
-  app.get '/data-by-timestamp', (req, res) ->
-    db = req.db
-    byTimestamp = db.get 'byTimestamp'
-    byTimestamp.find {}, {}, (e, dataByTimestamp) ->
-      context =
-        dataByTimestamp: dataByTimestamp
-      res.render 'by-timestamp.ejs', context
-
-  app.get '/crud', (req, res) ->
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.find {}, {}, (e, urlRecords) ->
-      context =
-        urlRecords: urlRecords
-      res.render 'crud.ejs', context
 
   app.post '/add-url', urlencodedParserLib, (req, res) ->
     url = req.body.url

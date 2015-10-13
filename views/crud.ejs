@@ -1,14 +1,14 @@
 <html>
 <head>
   <%- include('header') %>
-  <script src="js/tablesorter.min.js"></script>
-  <link href="css/tablesorter.css" rel="stylesheet">
-  <script src="js/crud.js"></script>
+  <script src="/js/tablesorter.min.js"></script>
+  <link href="/css/tablesorter.css" rel="stylesheet">
+  <script src="/js/crud.js"></script>
 </head>
 <body>
   <%- include('navbar') %>
   <div class="container">
-    <div class="well">Please refrain from altering the URLs while checks are running to preserve the data integrity.</div>
+    <div class="well">Please refrain from updating and deleting the URLs while checks are running to preserve the data integrity.</div>
     <form id="newURLForm">
       <div>
         <label for="url">URL:</label><input type="url" id="url" name="url">

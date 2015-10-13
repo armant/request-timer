@@ -43,20 +43,61 @@ module.exports = function(app) {
         _id: -1
       }
     }, function(error, resultArray) {
-      var context, lastRecord, progressPercentage, urlCount;
-      lastRecord = resultArray[0];
-      if (lastRecord) {
-        urlCount = lastRecord['urlCount'];
-        progressPercentage = Math.floor(lastRecord['responseRecords'].length / urlCount * 100);
+      var timestamp;
+      timestamp = resultArray[0]['timestamp'];
+      return res.redirect("/timestamp/" + timestamp);
+    });
+  });
+  app.get('/timestamp/:timestamp', function(req, res) {
+    var byTimestamp, db;
+    db = req.db;
+    byTimestamp = db.get('byTimestamp');
+    return byTimestamp.findOne({
+      timestamp: req.params.timestamp
+    }, function(error, timestampRecord) {
+      var context, currentUrlCount, progressPercentage, totalUrlCount;
+      if (error) {
+        res.sendStatus(500);
+        return;
+      }
+      if (timestampRecord) {
+        totalUrlCount = timestampRecord['urlCount'];
+        currentUrlCount = timestampRecord['responseRecords'].length;
+        progressPercentage = Math.floor(currentUrlCount / totalUrlCount * 100);
       } else {
         progressPercentage = 100;
       }
       context = {
-        data: lastRecord,
+        data: timestampRecord,
         progressPercentage: progressPercentage,
-        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
+        NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS,
+        ALERT_MULTIPLE: ALERT_MULTIPLE
       };
-      return res.render('latest.ejs', context);
+      return res.render('run-data.ejs', context);
+    });
+  });
+  app.get('/timestamps', function(req, res) {
+    var byTimestamp, db;
+    db = req.db;
+    byTimestamp = db.get('byTimestamp');
+    return byTimestamp.find({}, {}, function(e, dataByTimestamp) {
+      var context;
+      context = {
+        dataByTimestamp: dataByTimestamp
+      };
+      return res.render('timestamps.ejs', context);
+    });
+  });
+  app.get('/urls', function(req, res) {
+    var byUrl, db;
+    db = req.db;
+    byUrl = db.get('byUrl');
+    return byUrl.find({}, {}, function(e, urlRecords) {
+      var context;
+      context = {
+        urlRecords: urlRecords
+      };
+      return res.render('crud.ejs', context);
     });
   });
   app.get('/data-by-url', function(req, res) {
@@ -70,30 +111,6 @@ module.exports = function(app) {
         NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
       };
       return res.render('by-url.ejs', context);
-    });
-  });
-  app.get('/data-by-timestamp', function(req, res) {
-    var byTimestamp, db;
-    db = req.db;
-    byTimestamp = db.get('byTimestamp');
-    return byTimestamp.find({}, {}, function(e, dataByTimestamp) {
-      var context;
-      context = {
-        dataByTimestamp: dataByTimestamp
-      };
-      return res.render('by-timestamp.ejs', context);
-    });
-  });
-  app.get('/crud', function(req, res) {
-    var byUrl, db;
-    db = req.db;
-    byUrl = db.get('byUrl');
-    return byUrl.find({}, {}, function(e, urlRecords) {
-      var context;
-      context = {
-        urlRecords: urlRecords
-      };
-      return res.render('crud.ejs', context);
     });
   });
   app.post('/add-url', urlencodedParserLib, function(req, res) {
