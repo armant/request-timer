@@ -1,149 +1,24 @@
 # multiple for last durations average used as alert threshold
 ALERT_MULTIPLE = 2
 
-# upper bound constant for request time and variance
-MAX_VALUE = 100000
-
 # number of last request runs to consider for benchmarking
 NUM_OF_LAST_RUNS = 7
 
 # number of requests for one URL test
 NUM_OF_REQUESTS = 5
 
-# allowed request types
-REQUEST_TYPES =
-  'GET': true
-  'POST': true
-
 # request timeout time in milliseconds
 TIMEOUT = 10000
 
 # library to handle sync/async
 asyncLib = require 'async'
+
 # library for sending HTTP requests
 requestLib = require 'request'
-# library for application/x-www-form-urlencoded parser from request.body
-urlencodedParserLib = require('body-parser').urlencoded { extended: false }
-# library for JSON parser from request.body
-jsonParserLib = require('body-parser').urlencoded { extended: false }
-# URL parsing library
-urlLib = require 'url'
-# URL validation library
-validUrlLib = require 'valid-url'
 
-module.exports = (app) ->
-  app.get '/', (req, res) ->
-    db = req.db
-    byTimestamp = db.get 'byTimestamp'
-    byTimestamp.find {}, {limit: 1, sort: {_id: -1}}, (error, resultArray) ->
-      if resultArray.length
-        timestamp = resultArray[0]['timestamp']
-      else
-        timestamp = 'no-records'
-      res.redirect "/timestamp/#{ timestamp }"
-
-  app.get '/timestamp/:timestamp', (req, res) ->
-    db = req.db
-    byTimestamp = db.get 'byTimestamp'
-    byTimestamp.findOne(
-      {timestamp: req.params.timestamp},
-      (error, timestampRecord) ->
-        if error
-          res.sendStatus 500
-          return
-        if timestampRecord
-          totalUrlCount = timestampRecord['urlCount']
-          currentUrlCount = timestampRecord['responseRecords'].length
-          progressPercentage = Math.floor currentUrlCount / totalUrlCount * 100
-        else
-          progressPercentage = 100
-        context =
-          data: timestampRecord
-          progressPercentage: progressPercentage
-          NUM_OF_LAST_RUNS: NUM_OF_LAST_RUNS
-          ALERT_MULTIPLE: ALERT_MULTIPLE
-        res.render 'timestamp-data.ejs', context)
-
-  app.get '/url/:_id', (req, res) ->
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.findOne {_id: req.params._id}, (error, urlRecord) ->
-      if error
-        res.sendStatus 500
-        return
-      context =
-        data: urlRecord
-      res.render 'url-data.ejs', context
-
-  app.get '/timestamps', (req, res) ->
-    db = req.db
-    byTimestamp = db.get 'byTimestamp'
-    byTimestamp.find {}, {}, (e, dataByTimestamp) ->
-      context =
-        dataByTimestamp: dataByTimestamp
-      res.render 'timestamps.ejs', context
-
-  app.get '/urls', (req, res) ->
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.find {}, {}, (e, urlRecords) ->
-      context =
-        urlRecords: urlRecords
-      res.render 'urls.ejs', context
-
-  app.post '/add-url', urlencodedParserLib, (req, res) ->
-    url = req.body.url
-    type = req.body.type
-    data = if type is 'GET' then '' else req.body.data
-    _id = req.body._id
-    if not validUrlLib.isUri(url)
-      res.status(500).send 'newURLErrorURL'
-      return
-    if not REQUEST_TYPES[type]
-      res.status(500).send 'newURLErrorType'
-      return
-    if data
-      try
-        JSON.parse data
-      catch
-        res.status(500).send 'newURLErrorData'
-        return
-
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.findOne {url: url, type: type, data: data}, (error, result) ->
-      if error
-        res.status(500).send 'newURLErrorSave'
-        return
-      if result
-        res.status(500).send 'newURLErrorDuplicate'
-        return
-      byUrl.remove {_id: _id}, (error, removed) ->
-        if error
-          res.status(500).send 'newURLErrorSave'
-          return
-      urlEntry =
-        url: url
-        type: type
-        data: data
-        durations: []
-      byUrl.insert urlEntry, (error, insertedUrlObject) ->
-        if error
-          res.status(500).send 'newURLErrorSave'
-          return
-        res.send insertedUrlObject['_id']
-
-  app.post '/delete-url', jsonParserLib, (req, res) ->
-    db = req.db
-    byUrl = db.get 'byUrl'
-    byUrl.remove req.body, (error, removed) ->
-      if error
-        res.sendStatus 500
-      res.sendStatus 200
-
-  app.get '/run', (req, res) ->
-    runChecks req.db
-    res.redirect '/'
+exports.run = (req, res) ->
+  runChecks req.db
+  res.redirect '/'
 
 runChecks = (db) ->
   byUrl = db.get 'byUrl'
