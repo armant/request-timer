@@ -40,12 +40,10 @@ runChecks = function(db) {
         data = urlRecord['data'];
         options = {
           uri: url,
+          headers: headers ? headers : {},
           time: true,
           timeout: TIMEOUT
         };
-        if (headers) {
-          options['headers'] = headers;
-        }
         if (requestType === 'GET') {
           requestCallerFunction = function(requestCallerCallback) {
             return requestLib(options, requestCallerCallback);

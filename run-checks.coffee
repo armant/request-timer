@@ -38,10 +38,9 @@ runChecks = (db) ->
         data = urlRecord['data']
         options =
           uri: url
+          headers: if headers then headers else {}
           time: true
           timeout: TIMEOUT
-        if headers
-          options['headers'] = headers
         if requestType is 'GET'
           requestCallerFunction = (requestCallerCallback) ->
             requestLib options, requestCallerCallback
