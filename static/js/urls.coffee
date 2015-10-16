@@ -1,3 +1,13 @@
+URL_COMPONENTS = ['url', 'type', 'headers', 'data']
+
+makeFormId = (urlComponent, prependSymbol) ->
+  prefix = if prependSymbol then '#' else ''
+  return prefix + urlComponent
+
+makeTableClass = (urlComponent, prependSymbol) ->
+  prefix = if prependSymbol then '.' else ''
+  return prefix + urlComponent + 'TableCell'
+
 $(document).ready ->
   $('#type').change ->
     type = $(this).val()
@@ -10,14 +20,22 @@ $(document).ready ->
     event.preventDefault()
     $('.urlAlert').addClass 'hide'
     url = $('#url').val()
-    type = $('#type').val()
     if not isUrlValid url
       $('#newURLErrorURL').removeClass 'hide'
       return
+    type = $('#type').val()
+    headers = $('#headers').val()
+    data = if type is 'GET' then '' else $('#data').val()
+    if headers
+      try
+        $.parseJSON headers
+      catch jsonError
+        $('#newURLErrorHeaders').removeClass 'hide'
+        return
     data = if type is 'GET' then '' else $('#data').val()
     if data
       try
-        $.parseJSON(data);
+        $.parseJSON data
       catch jsonError
         $('#newURLErrorData').removeClass 'hide'
         return
@@ -30,25 +48,20 @@ $(document).ready ->
         else
           $('#newURLSuccess').removeClass 'hide'
         # Attach the new/updated URL to the top of the table
-        urlCell = document.createElement 'td'
-        $(urlCell).addClass 'tableUrl'
-        $(urlCell).append url
-        typeCell = document.createElement 'td'
-        $(typeCell).addClass 'tableType'
-        $(typeCell).append type
-        dataCell = document.createElement 'td'
-        $(dataCell).addClass 'tableData'
-        $(dataCell).append data
+        tableCells = []
+        for urlComponent in URL_COMPONENTS
+          tableCell = document.createElement 'td'
+          $(tableCell).addClass makeTableClass urlComponent
+          $(tableCell).append $(makeFormId urlComponent, true).val()
+          tableCells.push tableCell
         updateButton = document.createElement 'button'
         $(updateButton).attr
           'type': 'button'
-          'data-url-id': newUrlId
           'class': 'btn btn-default updateUrl'
         $(updateButton).html 'Update'
         deleteButton = document.createElement 'button'
         $(deleteButton).attr
           'type': 'button'
-          'data-url-id': newUrlId
           'class': 'btn btn-default deleteUrl'
         $(deleteButton).html 'Delete'
         buttonGrouper = document.createElement 'div'
@@ -59,23 +72,24 @@ $(document).ready ->
         actionCell = document.createElement 'td'
         $(actionCell).append buttonGrouper
         row = document.createElement 'tr'
-        $(row).append urlCell, typeCell, dataCell, actionCell
+        $(row).attr
+          'data-url-id': newUrlId
+        $(row).append tableCells, actionCell
         $('#urlTableBody').prepend row
       .fail (requestError) ->
         $("##{ requestError['responseText'] }").removeClass 'hide'
 
   $('body').delegate '.updateUrl', 'click', ->
     $('.urlAlert').addClass 'hide'
-    rowDom = $(this).closest('tr')
+    rowDom = $(this).closest 'tr'
     rowDom.attr 'id', 'rowToDelete'
-    url = $(rowDom.find('.tableUrl')[0]).text()
-    type = $(rowDom.find('.tableType')[0]).text()
-    data = $(rowDom.find('.tableData')[0]).text()
-    _id = $(this).data 'url-id'
-    $('#url').val(url)
-    $('#type').val(type)
-    $('#data').val(data)
-    $('#_id').val(_id)
+    for urlComponent in URL_COMPONENTS
+      formField = $ makeFormId urlComponent, true
+      cellText = $(rowDom.find(makeTableClass urlComponent, true)[0]).text()
+      formField.val cellText
+    _id = rowDom.data 'url-id'
+    $(makeFormId '_id', true).val(_id)
+    type = $(rowDom.find('.typeTableCell')[0]).text()
     if type is 'GET'
       $('#dataWrapper').addClass 'hide'
     else if type is 'POST'
@@ -84,7 +98,8 @@ $(document).ready ->
 
   $('body').delegate '.deleteUrl', 'click', ->
     $('.urlAlert').addClass 'hide'
-    _id = $(this).data 'url-id'
+    rowDom = $(this).closest 'tr'
+    _id = rowDom.data 'url-id'
     rowDom = $(this).closest 'tr'
     $.ajax
       url: '/url'

@@ -10,6 +10,7 @@
     <% if (data) { %>
       <h4><%= data['url'] %></h4>
       <h4><%= data['type'] %></h4>
+      <h4><%= JSON.stringify(data['headers']) %></h4>
       <h4><%= data['data'] %></h4>
     <% } %>
     <table class="table tablesorter">

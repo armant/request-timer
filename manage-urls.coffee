@@ -9,6 +9,7 @@ validUrlLib = require 'valid-url'
 exports.addUrl = (req, res) ->
   url = req.body.url
   type = req.body.type
+  headers = req.body.headers
   data = if type is 'GET' then '' else req.body.data
   _id = req.body._id
   if not validUrlLib.isUri(url)
@@ -17,6 +18,12 @@ exports.addUrl = (req, res) ->
   if not REQUEST_TYPES[type]
     res.status(500).send 'newURLErrorType'
     return
+  if headers
+    try
+      headers = JSON.parse headers
+    catch
+      res.status(500).send 'newURLErrorHeaders'
+      return
   if data
     try
       JSON.parse data
@@ -26,7 +33,12 @@ exports.addUrl = (req, res) ->
 
   db = req.db
   byUrl = db.get 'byUrl'
-  byUrl.findOne {url: url, type: type, data: data}, (error, result) ->
+  urlComponents =
+    url: url
+    type: type
+    headers: headers
+    data: data
+  byUrl.findOne urlComponents, (error, result) ->
     if error
       res.status(500).send 'newURLErrorSave'
       return
@@ -37,12 +49,8 @@ exports.addUrl = (req, res) ->
       if error
         res.status(500).send 'newURLErrorSave'
         return
-    urlEntry =
-      url: url
-      type: type
-      data: data
-      durations: []
-    byUrl.insert urlEntry, (error, insertedUrlObject) ->
+    urlComponents['durations'] = []
+    byUrl.insert urlComponents, (error, insertedUrlObject) ->
       if error
         res.status(500).send 'newURLErrorSave'
         return

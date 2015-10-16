@@ -9,9 +9,10 @@ REQUEST_TYPES = {
 validUrlLib = require('valid-url');
 
 exports.addUrl = function(req, res) {
-  var _id, byUrl, data, db, type, url;
+  var _id, byUrl, data, db, headers, type, url, urlComponents;
   url = req.body.url;
   type = req.body.type;
+  headers = req.body.headers;
   data = type === 'GET' ? '' : req.body.data;
   _id = req.body._id;
   if (!validUrlLib.isUri(url)) {
@@ -21,6 +22,14 @@ exports.addUrl = function(req, res) {
   if (!REQUEST_TYPES[type]) {
     res.status(500).send('newURLErrorType');
     return;
+  }
+  if (headers) {
+    try {
+      headers = JSON.parse(headers);
+    } catch (_error) {
+      res.status(500).send('newURLErrorHeaders');
+      return;
+    }
   }
   if (data) {
     try {
@@ -32,12 +41,13 @@ exports.addUrl = function(req, res) {
   }
   db = req.db;
   byUrl = db.get('byUrl');
-  return byUrl.findOne({
+  urlComponents = {
     url: url,
     type: type,
+    headers: headers,
     data: data
-  }, function(error, result) {
-    var urlEntry;
+  };
+  return byUrl.findOne(urlComponents, function(error, result) {
     if (error) {
       res.status(500).send('newURLErrorSave');
       return;
@@ -53,13 +63,8 @@ exports.addUrl = function(req, res) {
         res.status(500).send('newURLErrorSave');
       }
     });
-    urlEntry = {
-      url: url,
-      type: type,
-      data: data,
-      durations: []
-    };
-    return byUrl.insert(urlEntry, function(error, insertedUrlObject) {
+    urlComponents['durations'] = [];
+    return byUrl.insert(urlComponents, function(error, insertedUrlObject) {
       if (error) {
         res.status(500).send('newURLErrorSave');
         return;

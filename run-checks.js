@@ -33,12 +33,14 @@ runChecks = function(db) {
     byTimestamp.insert(timestampRecord);
     return asyncLib.series(urlRecords.map(function(urlRecord) {
       return function(callbackOuter) {
-        var data, options, requestCallerFunction, requestType, url;
+        var data, headers, options, requestCallerFunction, requestType, url;
         url = urlRecord['url'];
         requestType = urlRecord['type'];
+        headers = urlRecord['headers'];
         data = urlRecord['data'];
         options = {
           uri: url,
+          headers: headers,
           time: true,
           timeout: TIMEOUT
         };
@@ -51,13 +53,13 @@ runChecks = function(db) {
             return requestLib.post(options, data, requestCallerCallback);
           };
         }
-        return executeRequests(requestCallerFunction, db, url, requestType, data, timestamp, callbackOuter);
+        return executeRequests(requestCallerFunction, db, url, requestType, headers, data, timestamp, callbackOuter);
       };
     }));
   });
 };
 
-executeRequests = function(requestCallerFunction, db, url, requestType, data, timestamp, callbackOuter) {
+executeRequests = function(requestCallerFunction, db, url, requestType, headers, data, timestamp, callbackOuter) {
   var i, responseRecords, results1;
   responseRecords = [];
   return asyncLib.series((function() {
@@ -71,6 +73,7 @@ executeRequests = function(requestCallerFunction, db, url, requestType, data, ti
         responseRecord = {
           url: url,
           type: requestType,
+          headers: headers,
           data: data,
           statusCode: -1,
           time: null,
@@ -84,7 +87,7 @@ executeRequests = function(requestCallerFunction, db, url, requestType, data, ti
         }
         responseRecords.push(responseRecord);
         if (responseRecords.length === NUM_OF_REQUESTS) {
-          addDuration(db, url, requestType, data, responseRecords, timestamp);
+          addDuration(db, responseRecords, timestamp);
           responseRecords = [];
         }
         return callbackInner(null);
@@ -95,19 +98,18 @@ executeRequests = function(requestCallerFunction, db, url, requestType, data, ti
   });
 };
 
-addDuration = function(db, url, requestType, data, responseRecords, timestamp) {
-  var byTimestamp, byUrl, currentDuration, responseRecord;
+addDuration = function(db, responseRecords, timestamp) {
+  var byTimestamp, byUrl, currentDuration, query, responseRecord;
   responseRecord = findMedianRecord(responseRecords);
   currentDuration = responseRecord['time'];
-  console.log(url);
-  console.log(responseRecords);
-  console.log(responseRecord);
   byUrl = db.get('byUrl');
-  byUrl.findOne({
-    url: url,
-    type: requestType,
-    data: data
-  }, function(error, durationsObject) {
+  query = {
+    url: responseRecord['url'],
+    type: responseRecord['type'],
+    headers: responseRecord['headers'],
+    data: responseRecord['data']
+  };
+  byUrl.findOne(query, function(error, durationsObject) {
     var i, lastDurations, len, previousSizeAverage, previousTimeAverage, recordCount, sumDurations, sumSizes, variance;
     if (error) {
       console.log('ERROR: the database could be updated');
@@ -119,9 +121,6 @@ addDuration = function(db, url, requestType, data, responseRecords, timestamp) {
     responseRecord['previousTimeAverage'] = previousTimeAverage;
     responseRecord['previousSizeAverage'] = previousSizeAverage;
     responseRecord['variance'] = variance;
-    if (previousTimeAverage * ALERT_MULTIPLE < currentDuration) {
-      console.log("ALERT FIRED: " + url + " request duration of " + currentDuration + " exceeded the last " + NUM_OF_LAST_RUNS + "-check average of " + previousTimeAverage + " more than " + ALERT_MULTIPLE + " times");
-    }
     durationsObject['durations'].push(responseRecord);
     durationsObject['lastDurations'] = durationsObject['durations'].slice(-NUM_OF_LAST_RUNS);
     lastDurations = durationsObject['lastDurations'];
@@ -143,9 +142,10 @@ addDuration = function(db, url, requestType, data, responseRecords, timestamp) {
     }, durationsObject);
   });
   byTimestamp = db.get('byTimestamp');
-  return byTimestamp.findOne({
+  query = {
     timestamp: timestamp
-  }, function(error, timestampRecord) {
+  };
+  return byTimestamp.findOne(query, function(error, timestampRecord) {
     if (error) {
       console.log('ERROR: the database could be updated');
       return;

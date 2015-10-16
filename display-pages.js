@@ -6,15 +6,16 @@ ALERT_MULTIPLE = 2;
 NUM_OF_LAST_RUNS = 7;
 
 exports.index = function(req, res) {
-  var byTimestamp, db;
+  var byTimestamp, db, query;
   db = req.db;
   byTimestamp = db.get('byTimestamp');
-  return byTimestamp.find({}, {
+  query = {
     limit: 1,
     sort: {
       _id: -1
     }
-  }, function(error, resultArray) {
+  };
+  return byTimestamp.find({}, query, function(error, resultArray) {
     var timestamp;
     timestamp = resultArray.length ? resultArray[0]['timestamp'] : '';
     return res.redirect("/timestamp/" + timestamp);
@@ -22,12 +23,13 @@ exports.index = function(req, res) {
 };
 
 exports.showByTimestamp = function(req, res) {
-  var byTimestamp, db;
+  var byTimestamp, db, query;
   db = req.db;
   byTimestamp = db.get('byTimestamp');
-  return byTimestamp.findOne({
+  query = {
     timestamp: req.params.timestamp
-  }, function(error, timestampRecord) {
+  };
+  return byTimestamp.findOne(query, function(error, timestampRecord) {
     var context, currentUrlCount, progressPercentage, totalUrlCount;
     if (error) {
       res.sendStatus(500);
@@ -51,12 +53,13 @@ exports.showByTimestamp = function(req, res) {
 };
 
 exports.showByUrl = function(req, res) {
-  var byUrl, db;
+  var byUrl, db, query;
   db = req.db;
   byUrl = db.get('byUrl');
-  return byUrl.findOne({
+  query = {
     _id: req.params._id
-  }, function(error, urlRecord) {
+  };
+  return byUrl.findOne(query, function(error, urlRecord) {
     var context;
     if (error) {
       res.sendStatus(500);

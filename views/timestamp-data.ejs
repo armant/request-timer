@@ -25,7 +25,7 @@
     <table class="table tablesorter">
       <thead>
         <tr>
-          <% var headers = ['URL', 'Type', 'Data', 'Status code', 'Duration (ms)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs duration average (ms)', 'Duration variance', 'Response size (bytes)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs response size average (bytes)'];
+          <% var headers = ['URL', 'Type', 'Headers', 'Data', 'Status code', 'Duration (ms)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs duration average (ms)', 'Duration variance', 'Response size (bytes)', 'Previous ' + NUM_OF_LAST_RUNS + ' runs response size average (bytes)'];
           for (var i=0; i < headers.length; i++) { %>
             <th><%= headers[i] %></th>
           <% } %>
@@ -33,15 +33,21 @@
       </thead>
       <tbody>
         <% if (data) {
-          var keywords = ['url', 'type', 'data', 'statusCode', 'time', 'previousTimeAverage', 'variance', 'size', 'previousSizeAverage'];
+          var keywords = ['url', 'type', 'headers', 'data', 'statusCode', 'time', 'previousTimeAverage', 'variance', 'size', 'previousSizeAverage'];
           for (var i=0; i < data['responseRecords'].length; i++) {
             var trClass = data['responseRecords'][i]['statusCode'] === 200 ? 'success' : 'warning';
             if (data['responseRecords'][i]['variance'] >= ALERT_MULTIPLE) {
               trClass = 'danger';
-            }%>
+            } %>
             <tr class="<%= trClass %>">
               <% for (var j=0; j < keywords.length; j++) { %>
-                <td><%= data['responseRecords'][i][keywords[j]] %></td>
+                <td>
+                  <% if (keywords[j] === 'headers') { %>
+                    <%= JSON.stringify(data['responseRecords'][i][keywords[j]]) %>
+                  <% } else { %>
+                    <%= data['responseRecords'][i][keywords[j]] %>
+                  <% } %>
+                </td>
               <% } %>
             </tr>
           <% }

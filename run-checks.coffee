@@ -34,9 +34,11 @@ runChecks = (db) ->
       (callbackOuter) ->
         url = urlRecord['url']
         requestType = urlRecord['type']
+        headers = urlRecord['headers']
         data = urlRecord['data']
         options =
           uri: url
+          headers: headers
           time: true
           timeout: TIMEOUT
         if requestType is 'GET'
@@ -49,6 +51,7 @@ runChecks = (db) ->
                         db,
                         url,
                         requestType,
+                        headers,
                         data,
                         timestamp,
                         callbackOuter)
@@ -58,6 +61,7 @@ executeRequests = (
     db,
     url,
     requestType,
+    headers,
     data,
     timestamp,
     callbackOuter) ->
@@ -68,6 +72,7 @@ executeRequests = (
           responseRecord =
               url: url
               type: requestType
+              headers: headers
               data: data
               statusCode: -1
               time: null
@@ -79,61 +84,57 @@ executeRequests = (
             responseRecord['size'] = body.length
           responseRecords.push responseRecord
           if responseRecords.length is NUM_OF_REQUESTS
-            addDuration(db, url, requestType, data, responseRecords, timestamp)
+            addDuration(db, responseRecords, timestamp)
             responseRecords = []
           callbackInner null
     (err, results) ->
       callbackOuter null)
 
-addDuration = (db, url, requestType, data, responseRecords, timestamp) ->
+addDuration = (db, responseRecords, timestamp) ->
   # update the (URLs -> data) collection with new measurement
   responseRecord = findMedianRecord responseRecords
   currentDuration = responseRecord['time']
-  console.log url
-  console.log responseRecords
-  console.log responseRecord
   byUrl = db.get 'byUrl'
-  byUrl.findOne(
-    {url: url, type: requestType, data: data},
-    (error, durationsObject) ->
-      if error
-        console.log 'ERROR: the database could be updated'
-        return
-      previousTimeAverage = durationsObject['lastDurationsAverage']
-      previousSizeAverage = durationsObject['lastSizesAverage']
-      variance = (currentDuration / durationsObject['lastDurationsAverage'])
-          .toFixed(2)
-      responseRecord['previousTimeAverage'] = previousTimeAverage
-      responseRecord['previousSizeAverage'] = previousSizeAverage
-      responseRecord['variance'] = variance
-      if previousTimeAverage*ALERT_MULTIPLE < currentDuration
-        console.log "ALERT FIRED: #{ url } request duration of
-                     #{ currentDuration } exceeded the last
-                     #{ NUM_OF_LAST_RUNS }-check average of
-                     #{ previousTimeAverage } more than #{ ALERT_MULTIPLE }
-                     times"
-      durationsObject['durations'].push responseRecord
-      durationsObject['lastDurations'] =
+  query =
+    url: responseRecord['url']
+    type: responseRecord['type']
+    headers: responseRecord['headers']
+    data: responseRecord['data']
+  byUrl.findOne query, (error, durationsObject) ->
+    if error
+      console.log 'ERROR: the database could be updated'
+      return
+    previousTimeAverage = durationsObject['lastDurationsAverage']
+    previousSizeAverage = durationsObject['lastSizesAverage']
+    variance = (currentDuration / durationsObject['lastDurationsAverage'])
+        .toFixed(2)
+    responseRecord['previousTimeAverage'] = previousTimeAverage
+    responseRecord['previousSizeAverage'] = previousSizeAverage
+    responseRecord['variance'] = variance
+    durationsObject['durations'].push responseRecord
+    durationsObject['lastDurations'] =
         durationsObject['durations'][-NUM_OF_LAST_RUNS..]
 
-      #recalculate the moving averages and recent records
-      lastDurations = durationsObject['lastDurations']
-      sumDurations = 0
-      sumSizes = 0
-      recordCount = 0
-      for responseRecord in lastDurations
-        if responseRecord['time'] and responseRecord['size']
-          sumDurations += responseRecord['time']
-          sumSizes += responseRecord['size']
-          recordCount++
-      durationsObject['lastDurationsAverage'] = Math.floor(
-          sumDurations / recordCount)
-      durationsObject['lastSizesAverage'] = Math.floor sumSizes / recordCount
-      byUrl.update { _id: durationsObject['_id'] }, durationsObject)
+    #recalculate the moving averages and recent records
+    lastDurations = durationsObject['lastDurations']
+    sumDurations = 0
+    sumSizes = 0
+    recordCount = 0
+    for responseRecord in lastDurations
+      if responseRecord['time'] and responseRecord['size']
+        sumDurations += responseRecord['time']
+        sumSizes += responseRecord['size']
+        recordCount++
+    durationsObject['lastDurationsAverage'] = Math.floor(
+        sumDurations / recordCount)
+    durationsObject['lastSizesAverage'] = Math.floor sumSizes / recordCount
+    byUrl.update { _id: durationsObject['_id'] }, durationsObject
 
   # update the (timestamp -> data) collection with new measurement
   byTimestamp = db.get 'byTimestamp'
-  byTimestamp.findOne {timestamp: timestamp}, (error, timestampRecord) ->
+  query =
+    timestamp: timestamp
+  byTimestamp.findOne query, (error, timestampRecord) ->
     if error
       console.log 'ERROR: the database could be updated'
       return

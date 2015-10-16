@@ -20,6 +20,9 @@
           <option value="POST">POST</option>
         </select>
       </div>
+      <div>
+        <label for="headers">Headers:</label><textarea id="headers" name="headers" placeholder="Enter a valid JSON object"></textarea>
+      </div>
       <div class="hide" id="dataWrapper">
         <label for="data">Data:</label><textarea id="data" name="data" placeholder="Enter a valid JSON object"></textarea>
       </div>
@@ -32,6 +35,10 @@
       <div class="alert alert-danger urlAlert hide" role="alert" id="newURLErrorType">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
         The request type needs to be GET or POST; please try again with a correct request type.
+      </div>
+      <div class="alert alert-danger urlAlert hide" role="alert" id="newURLErrorHeaders">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        The headers are malformed; please try again with a properly formatted JSON.
       </div>
       <div class="alert alert-danger urlAlert hide" role="alert" id="newURLErrorData">
         <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -56,21 +63,23 @@
       <thead>
         <th>URL</th>
         <th>Type</th>
+        <th>Headers</th>
         <th>Data</th>
         <th>Action</th>
       </thead>
       <tbody id="urlTableBody">
         <% if (urlRecords) {
           for (var i=0; i < urlRecords.length; i++) { %>
-            <tr>
-              <td class='tableUrl'><%= urlRecords[i]['url'] %></td>
-              <td class='tableType'><%= urlRecords[i]['type'] %></td>
-              <td class='tableData'><%= urlRecords[i]['data'] %></td>
+            <tr data-url-id="<%= urlRecords[i]['_id'] %>">
+              <td class='urlTableCell'><%= urlRecords[i]['url'] %></td>
+              <td class='typeTableCell'><%= urlRecords[i]['type'] %></td>
+              <td class='headersTableCell'><%= JSON.stringify(urlRecords[i]['headers']) %></td>
+              <td class='dataTableCell'><%= urlRecords[i]['data'] %></td>
               <td>
                 <div class="btn-group" role="group">
                   <button type="button" class="btn btn-default"><a href="/url/<%= urlRecords[i]['_id'] %>">See <%= urlRecords[i]['durations'].length %> run(s)</a></button>
-                  <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default updateUrl">Update</button>
-                  <button type="button" data-url-id="<%= urlRecords[i]['_id'] %>" class="btn btn-default deleteUrl">Delete</button>
+                  <button type="button"  class="btn btn-default updateUrl">Update</button>
+                  <button type="button" class="btn btn-default deleteUrl">Delete</button>
                 </div>
               </td>
             </tr>
